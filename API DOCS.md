@@ -36,8 +36,7 @@ Authorization: Bearer <token>
 {
   "name": "string",
   "email": "string",
-  "phone_number": "string",
-  "source": "string"
+  "phone_number": "string"
 }
 ```
 

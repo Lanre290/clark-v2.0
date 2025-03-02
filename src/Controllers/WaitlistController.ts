@@ -10,7 +10,7 @@ const waitlistActions: waitListInterface = {
   addUser: async (req: Request, res: Response) => {
     const { name, email, phone_number, source } = req.body;
 
-    if (!name || !email || !phone_number || !source) {
+    if (!name || !email || !phone_number) {
       return res.status(400).json({ error: "Bad request." });
     }
 
