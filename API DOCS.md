@@ -62,7 +62,7 @@ Authorization: Bearer <token>
 #### **2. User Retreival**
 
 **URL:** `/api/v1/waitlist`  
-**Method:** `POST`  
+**Method:** `GET`  
 **Description:** Retreive a registered user.
 
 **Route parameters: email(optional). If provided, it returns the user with the associated email, and if not, returns all users that have regoistered the waitlist**
