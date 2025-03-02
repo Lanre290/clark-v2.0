@@ -3,7 +3,7 @@
 ## Base URL
 
 ```
-## https://clark-v2-0.onrender.com
+https://clark-v2-0.onrender.com
 ```
 
 ## Authentication
