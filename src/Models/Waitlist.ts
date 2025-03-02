@@ -1,5 +1,5 @@
 import { DataTypes, Model } from "sequelize";
-const sequelize = require("./../Setup/Sequelize");
+const sequelize = require("./../Setup/Sequelize.ts");
 
 class userWaitlist extends Model {
   public id!: number;
