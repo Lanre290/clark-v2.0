@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 const session = require("express-session");
 const cors = require("cors");
 var bodyParser = require("body-parser");
-const sequelize = require("./Setup/Sequelize");
+const sequelize = require("./Setup/Sequelize.ts");
 
 require("./setup/Sequelize");
 
