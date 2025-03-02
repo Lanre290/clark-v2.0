@@ -40,8 +40,8 @@ app.use(
   })
 );
 
-app.get("/api/v1/admin/waitlist/:email?", waitlistActions.getUser);
-app.post("/api/v1/admin/waitlist", waitlistActions.addUser);
+app.get("/api/v1/waitlist/:email?", waitlistActions.getUser);
+app.post("/api/v1/waitlist", waitlistActions.addUser);
 
 const startServer = async() => {
   try {
