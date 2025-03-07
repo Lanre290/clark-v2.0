@@ -8,15 +8,15 @@ interface waitListInterface {
 
 const waitlistActions: waitListInterface = {
   addUser: async (req: Request, res: Response) => {
-    const { name, email, phone_number, source } = req.body;
+    const { name, email } = req.body;
 
-    if (!name || !email || !phone_number) {
+    if (!name || !email) {
       return res.status(400).json({ error: "Bad request." });
     }
 
     try {
       const doesUserExist = await userWaitlist.findOne({
-        where: { email, phone_number },
+        where: { email },
       });
 
       if (doesUserExist) {
@@ -25,7 +25,7 @@ const waitlistActions: waitListInterface = {
           .json({ error: "User already exists.", message: "You're already on the waitlist!" });
       }
 
-      await userWaitlist.create({ name, email, phone_number, source });
+      await userWaitlist.create({ name, email});
 
       return res
         .status(201)
