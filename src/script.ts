@@ -19,8 +19,14 @@ interface corsInterface {
   allowedHeaders?: string[];
 }
 
+const allowedCorsUrls = FRONTEND_URL
+    ? FRONTEND_URL.split(',')
+    : [];
+
+    console.log(allowedCorsUrls)
+
 const corsOption: corsInterface = {
-  origin: FRONTEND_URL,
+  origin: allowedCorsUrls,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
