@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import userWaitlist from "../Models/Waitlist";
+import { sendWaitlistMail } from "../Mailing/waitlistWelcome";
 
 interface waitListInterface {
   addUser: (req: Request, res: Response) => Promise<Response | void>;
@@ -26,6 +27,7 @@ const waitlistActions: waitListInterface = {
       }
 
       await userWaitlist.create({ name, email});
+      sendWaitlistMail(email, name);
 
       return res
         .status(201)
