@@ -92,3 +92,27 @@ Authorization: Bearer <token>
 - **Code:** 400 BAD REQUEST  
   **Content:** `{"error":"Bad request."}`
   Make sure all parameters are provided.
+
+
+#### **3. User Deletion.**
+
+**URL:** `/api/v1/waitlist`  
+**Method:** `DELETE`  
+**Description:** Delete a registered user.
+
+**Query parameters: email(Compulsory).**
+
+**Success Response:**
+
+- **Code:** 204
+- **Content:**
+
+```text
+Empty
+```
+
+**Error Responses:**
+
+- **Code:** 400 BAD REQUEST  
+  **Content:** `{error: "Bad request.", message: "Email is not provided."}`
+  Make sure email is provided.

@@ -46,6 +46,7 @@ app.use(
 
 app.get("/api/v1/waitlist/:email?", waitlistActions.getUser);
 app.post("/api/v1/waitlist", waitlistActions.addUser);
+app.delete("/api/v1/waitlist", waitlistActions.deleteUser);
 
 const startServer = async() => {
   try {

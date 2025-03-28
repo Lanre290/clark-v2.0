@@ -5,6 +5,7 @@ import { sendWaitlistMail } from "../Mailing/waitlistWelcome";
 interface waitListInterface {
   addUser: (req: Request, res: Response) => Promise<Response | void>;
   getUser: (req: Request, res: Response) => Promise<Response | void>;
+  deleteUser: (req: Request, res: Response) => Promise<Response | void>;
 }
 
 const waitlistActions: waitListInterface = {
@@ -64,7 +65,23 @@ const waitlistActions: waitListInterface = {
     }
 
 
-  }
+  },
+
+  deleteUser : async (req, res) => {
+    const email = req.query.email;
+
+    if(!email){
+      return res.status(400).json({error: "Bad request.", message: "Email is not provided."});
+    }
+
+    userWaitlist.destroy({where: {email}})
+    .then(() => {
+      return res.status(204).json({success: true, message: 'User deleted sucessfully.'});
+    })
+    .catch(() => {
+      return res.status(500).json({error: "Error deleting user."});
+    })
+  },
 };
 
 export default waitlistActions;

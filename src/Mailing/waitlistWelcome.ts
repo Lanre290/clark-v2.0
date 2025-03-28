@@ -87,6 +87,11 @@ export const sendWaitlistMail = async (email: string, name: string) => {
                   margin: 20px 0;
                   text-align: left;
               }
+                  .image_{
+                    width: 100%;
+                    height: auto;
+                    object-size: cover;
+                  }
               ul {
                   padding-left: 20px;
               }
@@ -98,6 +103,7 @@ export const sendWaitlistMail = async (email: string, name: string) => {
       </head>
       <body>
           <div class="container">
+            <img src="https://res.cloudinary.com/dd75ybtpr/image/upload/v1743187133/Twitter_header_clark_htcteb.png" class= "image_"/>
               <h1>Welcome to Clark, ${name.split(" ").length > 1 ? name.split(" ")[1] : name}!</h1>
               <p>Congratulations! You’ve secured a spot on the <strong>Clark Waitlist</strong>. You're now part of an exclusive group getting early access to the most intelligent AI-powered learning assistant.</p>
               
