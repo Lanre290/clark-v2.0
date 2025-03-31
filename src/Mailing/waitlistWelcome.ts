@@ -97,7 +97,7 @@ export const sendWaitlistMail = async (email: string, name: string) => {
               }
             li{
                 margin-top: 10px;
-                font-size: 19px;
+                font-size: 16px;
             }
           </style>
       </head>
