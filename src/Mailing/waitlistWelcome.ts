@@ -121,7 +121,7 @@ export const sendWaitlistMail = async (email: string, name: string) => {
               
               <a href="https://clarkai.vercel.app/" class="cta-button">Visit Clark</a>
               <br>
-              <a href="https://chat.whatsapp.com/L1bdg81XmTZ3yuTDeCuc6R" class="whatsapp-link">Join Our WhatsApp Community</a>
+              <a href="https://chat.whatsapp.com/CAfbsIBoNjGK8EnwT4yRv5" class="whatsapp-link">Join Our WhatsApp Community</a>
   
               <div class="footer">
                   <p>Best,</p>
