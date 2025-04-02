@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node src/script.ts"
+    "build":  "npm install && npm i ts-node && npm install pg pg-hstore",
+    "start": "npx ts-node src/script.ts"
   },
   "keywords": [],
   "author": "",
