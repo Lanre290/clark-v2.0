@@ -104,7 +104,7 @@ export const sendWaitlistMail = async (email: string, name: string) => {
       <body>
           <div class="container">
             <img src="https://res.cloudinary.com/dd75ybtpr/image/upload/v1743187133/Twitter_header_clark_htcteb.png" class= "image_"/>
-              <h1>Welcome to Clark, ${name.split(" ").length > 1 ? name.split(" ")[1] : name}!</h1>
+              <h1>Welcome to Clark, ${name.trim().split(" ").length > 1 ? name.trim().split(" ")[1] : name.trim()}!</h1>
               <p>Congratulations! You’ve secured a spot on the <strong>Clark Waitlist</strong>. You're now part of an exclusive group getting early access to the most intelligent AI-powered learning assistant.</p>
               
               <div class="features">
