@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import userWaitlist from "../Models/Waitlist";
 import { sendWaitlistMail } from "../Mailing/waitlistWelcome";
+import xss from 'xss';
 
 interface waitListInterface {
   addUser: (req: Request, res: Response) => Promise<Response | void>;
@@ -10,8 +11,11 @@ interface waitListInterface {
 
 const waitlistActions: waitListInterface = {
   addUser: async (req: Request, res: Response) => {
-    const { name, email } = req.body;
+    let { name, email } = req.body;
 
+    name = xss(name);
+    email = xss(email);
+    
     if (!name || !email) {
       return res.status(400).json({ error: "Bad request." });
     }
