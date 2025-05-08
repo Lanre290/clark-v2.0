@@ -68,9 +68,7 @@ app.post("/api/v1/generateMaterial", middleware.verifyToken, userActions.generat
 app.post("/api/v1/generateQuiz", middleware.verifyToken, userActions.generateQuiz);
 app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.generateFlashcards);
 
-
-
-
+console.log("starting server...");
 
 const startServer = async() => {
   try {

@@ -8,7 +8,6 @@ const DB_USERNAME = process.env.DB_USERNAME;
 const DB_PASSWORD = process.env.DB_PASSWORD;
 const DB_HOST = process.env.DB_HOST;
 const DB_CONNECTION = process.env.DB_CONNECTION;
-const NODE_ENV = process.env.NODE_ENV;
 const DB_MODE = process.env.DB_MODE
 
 
