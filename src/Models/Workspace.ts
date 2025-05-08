@@ -24,6 +24,11 @@ Workspace.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    enc_id: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "0",
+    }
   },
   {
     sequelize: sequelize as Sequelize,

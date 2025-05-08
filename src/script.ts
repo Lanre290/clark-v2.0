@@ -61,6 +61,7 @@ app.delete("/api/v1/waitlist", waitlistActions.deleteUser);
 
 app.post("/api/v1/askQuestion", middleware.verifyToken, userActions.askQuestion);
 app.post("/api/v1/workspace", middleware.verifyToken, userActions.createWorkspace);
+app.get("/api/v1/workspace/:id?", middleware.verifyToken, userActions.getWorkspace);
 
 app.post("/api/v1/files", middleware.verifyToken, upload.array('files', 10), userActions.addFiles);
 
