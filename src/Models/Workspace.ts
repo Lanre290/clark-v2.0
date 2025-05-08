@@ -1,34 +1,34 @@
 import { DataTypes, Model } from "sequelize";
 const sequelize = require("./../config/Sequelize.ts");
 
-class userWaitlist extends Model {
+class Workspace extends Model {
   public id!: number;
   public name!: string;
-  public email!: string;
+  public ownerId!: number;
+  public createdAt!: Date;
+  public updatedAt!: Date;
 }
 
-userWaitlist.init(
+Workspace.init(
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-
     name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-
-    email: {
-      type: DataTypes.STRING,
+    userId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   },
   {
     sequelize,
-    tableName: "users_waitlist",
+    tableName: "workspaces",
   }
 );
 
-export default userWaitlist;
+export default Workspace;

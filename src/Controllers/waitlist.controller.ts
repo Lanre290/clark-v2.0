@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import userWaitlist from "../Models/Waitlist";
 import { sendWaitlistMail } from "../Mailing/waitlistWelcome";
 import xss from 'xss';
+import { GoogleGenAI, Type } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "GEMINI_API_KEY" });
 
 interface waitListInterface {
   addUser: (req: Request, res: Response) => Promise<Response | void>;
@@ -86,6 +89,7 @@ const waitlistActions: waitListInterface = {
       return res.status(500).json({error: "Error deleting user."});
     })
   },
+
 };
 
 export default waitlistActions;
