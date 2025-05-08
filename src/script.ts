@@ -1,4 +1,4 @@
-import AuthContoller from "./Controllers/auth.controller";
+import AuthController from "./Controllers/auth.controller";
 import userActions from "./Controllers/user.controller";
 import waitlistActions from "./Controllers/waitlist.controller";
 import middleware from "./Middlewares/Auth.middleware";
@@ -9,7 +9,7 @@ const dotenv = require("dotenv");
 const session = require("express-session");
 const cors = require("cors");
 var bodyParser = require("body-parser");
-// const sequelize = require("./config/Sequelize.ts");
+import sequelize from "./config/Sequelize";
 
 const app = express();
 dotenv.config();
@@ -51,8 +51,8 @@ app.use(
 
 
 // Auth Routes
-app.post("/api/v1/login", AuthContoller.login);
-app.post("/api/v1/signup", AuthContoller.signup);
+app.post("/api/v1/login", AuthController.login);
+app.post("/api/v1/signup", AuthController.signup);
 
 app.get("/api/v1/waitlist/:email?", waitlistActions.getUser);
 app.post("/api/v1/waitlist", waitlistActions.addUser);
@@ -73,10 +73,10 @@ console.log("starting server...");
 
 const startServer = async () => {
   try {
-    // await sequelize.authenticate();
+    await sequelize.authenticate();
     console.log("DB connection established");
 
-    // await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: true });
     console.log("Database synced");
 
     app.listen(PORT, () => {

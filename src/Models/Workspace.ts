@@ -1,10 +1,10 @@
-import { DataTypes, Model } from "sequelize";
-const sequelize = require("./../config/Sequelize.ts");
+import { DataTypes, Model, Sequelize } from "sequelize";
+import sequelize from "../config/Sequelize";
 
 class Workspace extends Model {
   public id!: number;
   public name!: string;
-  public ownerId!: number;
+  public userId!: number;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -26,8 +26,9 @@ Workspace.init(
     },
   },
   {
-    sequelize,
+    sequelize: sequelize as Sequelize,
     tableName: "workspaces",
+    modelName: "Workspace",
   }
 );
 

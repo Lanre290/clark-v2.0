@@ -9,7 +9,7 @@ interface AuthControllerInterface {
 }
 
 
-const AuthContoller: AuthControllerInterface = {
+const AuthController: AuthControllerInterface = {
     login: async (req: Request, res: Response) => {
         const { email, password } = req.body;
         if (!email || !password) {
@@ -91,4 +91,4 @@ const AuthContoller: AuthControllerInterface = {
     }
 }
 
-export default AuthContoller;
+export default AuthController;

@@ -1,5 +1,5 @@
-import { DataTypes, Model } from "sequelize";
-const sequelize = require("../config/Sequelize.ts");
+import { DataTypes, Model, Sequelize } from "sequelize";
+import sequelize from "../config/Sequelize";
 
 class ImageFiles extends Model {
   public id!: number;
@@ -31,8 +31,9 @@ ImageFiles.init(
     },
   },
   {
-    sequelize,
+    sequelize: sequelize as Sequelize,
     tableName: "image_files",
+    modelName: "ImageFiles",
   }
 );
 
