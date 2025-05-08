@@ -9,7 +9,7 @@ const dotenv = require("dotenv");
 const session = require("express-session");
 const cors = require("cors");
 var bodyParser = require("body-parser");
-const sequelize = require("./config/Sequelize.ts");
+// const sequelize = require("./config/Sequelize.ts");
 
 const app = express();
 dotenv.config();
@@ -70,15 +70,21 @@ app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.gener
 
 console.log("starting server...");
 
-const startServer = async() => {
+
+const startServer = async () => {
   try {
-    await sequelize.sync({ alter: true });
+    // await sequelize.authenticate();
+    console.log("DB connection established");
+
+    // await sequelize.sync({ alter: true });
+    console.log("Database synced");
+
     app.listen(PORT, () => {
       console.log(`Server is listening on port: ${PORT}`);
     });
   } catch (error) {
-    console.error(error)
+    console.error("Startup error:", error);
   }
-}
+};
 
 startServer();
