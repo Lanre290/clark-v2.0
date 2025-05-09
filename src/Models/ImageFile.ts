@@ -17,6 +17,10 @@ ImageFiles.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    fileName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     workspaceId: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -26,6 +30,10 @@ ImageFiles.init(
       allowNull: false,
     },
     filePath: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    size: {
       type: DataTypes.STRING,
       allowNull: false,
     },

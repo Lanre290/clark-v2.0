@@ -17,6 +17,10 @@ PDFFiles.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    fileName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     workspaceId: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -29,6 +33,10 @@ PDFFiles.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    size: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    }
   },
   {
     sequelize: sequelize as Sequelize,

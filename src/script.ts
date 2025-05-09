@@ -2,14 +2,15 @@ import AuthController from "./Controllers/auth.controller";
 import userActions from "./Controllers/user.controller";
 import waitlistActions from "./Controllers/waitlist.controller";
 import middleware from "./Middlewares/Auth.middleware";
+import { sanitizeRequestBody } from "./Middlewares/sanitizeRequest.middleware";
 import { upload } from "./Services/Multer.services";
+import sequelize from "./config/Sequelize";
 
 const express = require("express");
 const dotenv = require("dotenv");
 const session = require("express-session");
 const cors = require("cors");
 var bodyParser = require("body-parser");
-import sequelize from "./config/Sequelize";
 
 const app = express();
 dotenv.config();
@@ -48,6 +49,7 @@ app.use(
   })
 );
 
+app.use(sanitizeRequestBody);  // Sanitize request body middleware
 
 
 // Auth Routes
@@ -68,6 +70,8 @@ app.post("/api/v1/files", middleware.verifyToken, upload.array('files', 10), use
 app.post("/api/v1/generateMaterial", middleware.verifyToken, userActions.generateMaterial);
 app.post("/api/v1/generateQuiz", middleware.verifyToken, userActions.generateQuiz);
 app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.generateFlashcards);
+
+app.get("/api/v1/youtube/:id?", middleware.verifyToken, userActions.getYoutubeVideo);
 
 console.log("starting server...");
 
