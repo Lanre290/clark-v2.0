@@ -1,3 +1,7 @@
+import axios from "axios";
+
+
+
 export const extractYouTubeId = (url: any) => {
     let id = null;
     const normalLinkRegex =
@@ -16,3 +20,21 @@ export const extractYouTubeId = (url: any) => {
 
     return id;
   };
+
+
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  
+  export const fetchVideoData = async (videoId: string) => {
+
+    try {
+      const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=snippet,contentDetails,statistics`;
+
+      const response = await axios.get(url);
+      const videoData = response.data.items[0];
+
+      return videoData;
+    } catch (error) {
+      console.error("Error fetching video data:", error);
+      throw error;
+    }
+  }

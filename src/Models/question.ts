@@ -1,53 +1,50 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
 import sequelize from "../config/Sequelize";
 
-class ImageFiles extends Model {
+class Question extends Model {
   public id!: number;
-  public workspaceId!: string;
-  public userId!: string;
-  public filePath!: string;
+  public quizId!: number;
+  public question!: string;
+  public options!: string;
+  public correctAnswer!: string;
+  public explanation!: string;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
 
-ImageFiles.init(
+Question.init(
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    fileName: {
+    quizId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    question: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    workspaceId: {
+    options: {
+      type: DataTypes.JSON,
+      allowNull: false,
+    },
+    correctAnswer: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    userId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    filePath: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    summary: {
+    explanation: {
       type: DataTypes.TEXT,
       allowNull: true,
-      defaultValue: '',
-    },
-    size: {
-      type: DataTypes.STRING,
-      allowNull: false,
     },
   },
   {
     sequelize: sequelize as Sequelize,
-    tableName: "image_files",
-    modelName: "ImageFiles",
+    tableName: "questions",
+    modelName: "Question",
   }
 );
 
-export default ImageFiles;
+export default Question;

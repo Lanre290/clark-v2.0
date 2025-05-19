@@ -116,3 +116,5 @@ Empty
 - **Code:** 400 BAD REQUEST  
   **Content:** `{error: "Bad request.", message: "Email is not provided."}`
   Make sure email is provided.
+
+

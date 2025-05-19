@@ -2,7 +2,7 @@ import AuthController from "./Controllers/auth.controller";
 import userActions from "./Controllers/user.controller";
 import waitlistActions from "./Controllers/waitlist.controller";
 import middleware from "./Middlewares/Auth.middleware";
-import { sanitizeRequestBody } from "./Middlewares/sanitizeRequest.middleware";
+import { sanitizeRequest } from "./Middlewares/sanitizeRequest.middleware";
 import { upload } from "./Services/Multer.services";
 import sequelize from "./config/Sequelize";
 
@@ -49,12 +49,17 @@ app.use(
   })
 );
 
-app.use(sanitizeRequestBody);  // Sanitize request body middleware
+app.use(sanitizeRequest);  // Sanitize request body middleware
 
 
 // Auth Routes
 app.post("/api/v1/login", AuthController.login);
-app.post("/api/v1/signup", AuthController.signup);
+app.post("/api/v1/signup", upload.single('user_image'), AuthController.signup);
+app.get("/api/v1/refreshToken", middleware.verifyToken, AuthController.refreshToken);
+app.post("/api/v1/verifyOTP", AuthController.verifyOTP);
+app.post("/api/v1/otp", AuthController.sendOTP);
+app.post("/api/v1/forgotPassword", AuthController.sendForgotPasswordEmail);
+app.post("/api/v1/resetPassword", AuthController.resetPassword);
 
 app.get("/api/v1/waitlist/:email?", waitlistActions.getUser);
 app.post("/api/v1/waitlist", waitlistActions.addUser);
@@ -66,12 +71,19 @@ app.post("/api/v1/workspace", middleware.verifyToken, userActions.createWorkspac
 app.get("/api/v1/workspace/:id?", middleware.verifyToken, userActions.getWorkspace);
 
 app.post("/api/v1/files", middleware.verifyToken, upload.array('files', 10), userActions.addFiles);
+app.delete("/api/v1/files", middleware.verifyToken, userActions.deleteFiles);
 
-app.post("/api/v1/generateMaterial", middleware.verifyToken, userActions.generateMaterial);
+app.get("/api/v1/generateMaterial", middleware.verifyToken, userActions.generateMaterial);
 app.post("/api/v1/generateQuiz", middleware.verifyToken, userActions.generateQuiz);
 app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.generateFlashcards);
 
 app.get("/api/v1/youtube/:id?", middleware.verifyToken, userActions.getYoutubeVideo);
+app.post("/api/v1/youtube", middleware.verifyToken, userActions.addYoutubeVideo);
+app.get("/api/v1/facts", middleware.verifyToken, userActions.generateRandomFact);
+app.post("/api/v1/chat", middleware.verifyToken, userActions.askChatQuestion);
+app.post("/api/v1/suggestWorkspaceQuestion",middleware.verifyToken, userActions.suggestWorkspaceQuestion);
+app.get("/api/v1/quiz/:quiz_id?", middleware.verifyToken, userActions.getQuiz);
+
 
 console.log("starting server...");
 
@@ -93,3 +105,10 @@ const startServer = async () => {
 };
 
 startServer();
+
+
+// try doing user retrieval exported methos
+// youtube saving
+// saving mimetype in document
+// attack detecting
+// rate limiting

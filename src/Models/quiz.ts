@@ -1,27 +1,29 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
 import sequelize from "../config/Sequelize";
 
-class ImageFiles extends Model {
+class Quiz extends Model {
   public id!: number;
-  public workspaceId!: string;
+  public name!: string;
+  public creator!: string;
   public userId!: string;
-  public filePath!: string;
-  public createdAt!: Date;
-  public updatedAt!: Date;
+  public workspaceId!: string;
+  public duration!: number;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
-ImageFiles.init(
+Quiz.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    fileName: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    workspaceId: {
+    creator: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -29,25 +31,21 @@ ImageFiles.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    filePath: {
+    workspaceId: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    summary: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      defaultValue: '',
-    },
-    size: {
-      type: DataTypes.STRING,
+    duration: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 0,
     },
   },
   {
     sequelize: sequelize as Sequelize,
-    tableName: "image_files",
-    modelName: "ImageFiles",
+    tableName: "quiz",
+    modelName: "Quiz",
   }
 );
 
-export default ImageFiles;
+export default Quiz;

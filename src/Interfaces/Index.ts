@@ -6,6 +6,11 @@ type UserActionFn = (
   ) => Promise<Response | void>;
 
 
+type AuthActionFn = (
+    req: Request,
+    res: Response
+) => Promise<Response | void>;
+
 export interface prefileInterface {
     originalname: string;
     size: string;
@@ -23,6 +28,22 @@ export interface userActionsInterface {
   generateFlashcards: UserActionFn;
   getWorkspace: UserActionFn;
   getYoutubeVideo: UserActionFn;
+  addYoutubeVideo: UserActionFn;
+  generateRandomFact: UserActionFn;
+  askChatQuestion: UserActionFn;
+  suggestWorkspaceQuestion: UserActionFn;
+  getQuiz: UserActionFn;
+  deleteFiles: UserActionFn;
+}
+
+export interface AuthControllerInterface {
+  login: AuthActionFn;
+  signup: AuthActionFn;
+  refreshToken: UserActionFn;
+  sendOTP: AuthActionFn;
+  verifyOTP: AuthActionFn;
+  sendForgotPasswordEmail: AuthActionFn;
+  resetPassword: AuthActionFn;
 }
 
 export interface afterVerificationMiddlerwareInterface {

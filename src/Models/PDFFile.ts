@@ -33,6 +33,11 @@ PDFFiles.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    summary: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: '',
+    },
     size: {
       type: DataTypes.STRING,
       allowNull: false,

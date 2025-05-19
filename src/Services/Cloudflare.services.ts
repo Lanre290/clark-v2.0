@@ -22,3 +22,17 @@ export async function uploadFile(workspace_id: string, bucketName: string, fileN
 
   return `https://${process.env.R2_ENDPOINT_DOMAIN}/${bucketName}/${fileName}`;
 }
+
+export async function uploadUserPicture(bucketName: string, fileName: string, buffer: Buffer, mimeType: string) {
+  await r2
+    .putObject({
+      Bucket: 'clarkusers',
+      Key: fileName,
+      Body: buffer,
+      ContentType: mimeType,
+      ACL: "public-read" // Optional: use with Cloudflare Pages/Workers to avoid egress cost
+    })
+    .promise();
+
+  return `https://${process.env.R2_ENDPOINT_DOMAIN}/${bucketName}/user/${fileName}`;
+}

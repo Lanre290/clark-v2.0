@@ -1,19 +1,26 @@
 import { Request, Response } from "express";
-import User from "../Models/User";
 import Workspace from "../Models/Workspace";
 import { GoogleGenAI, Type } from "@google/genai";
 import axios from "axios";
 import { uploadFile } from "../Services/Cloudflare.services";
 import { v5 as uuidv5 } from "uuid";
 import PDFFiles from "../Models/PDFFile";
-import { afterVerificationMiddlerwareInterface, prefileInterface, userActionsInterface } from "../Interfaces/Index";
+import {
+  afterVerificationMiddlerwareInterface,
+  prefileInterface,
+  userActionsInterface,
+} from "../Interfaces/Index";
 import ImageFiles from "../Models/ImageFile";
 import { formatFileSize } from "../utils/fileFormat.util";
+import { fetchVideoData } from "../utils/youtube.utils";
+import YouTubeVideo from "../Models/youtubeVideo";
+import { processFiles } from "../utils/fileHandler.utils";
+import { GEMINI_API_KEY, generateDetailedContent } from "../utils/gemini.utils";
+import Quiz from "../Models/quiz";
+import Question from "../Models/question";
 
-
-const API_KEY = process.env.GEMINI_API_KEY || "GEMINI_API_KEY";
 const ai = new GoogleGenAI({
-  apiKey: API_KEY,
+  apiKey: GEMINI_API_KEY,
 });
 
 const userActions: userActionsInterface = {
@@ -73,14 +80,21 @@ const userActions: userActionsInterface = {
   ) => {
     let { question, workspace_id, thinking } = req.body;
 
-    question = `Based on the following documents and additional images provided, answer the question: ${question}. Go through all documents and images extensively and provide a detailed answer. If the answer is not available in the documents, please state that. Make sure to go through all additional images extensively too.`;
-
     if (!question || !workspace_id) {
       return res.status(400).json({ error: "Bad request." });
     }
 
     if (!thinking) {
       thinking = false;
+    }
+
+    const workspaceExists = await Workspace.findOne({
+      where: { enc_id: workspace_id },
+      attributes: ["id"],
+    });
+
+    if (!workspaceExists) {
+      return res.status(404).json({ error: "Workspace not found." });
     }
 
     const pdfFiles = await PDFFiles.findAll({
@@ -93,37 +107,50 @@ const userActions: userActionsInterface = {
       attributes: ["filePath"],
     });
 
+    let youtubeVideos = await YouTubeVideo.findAll({
+      where: { workspaceId: workspace_id },
+      attributes: ["description", "title"],
+    });
+
+    youtubeVideos = youtubeVideos.map(
+      (video) => video.dataValues
+    ) as unknown as YouTubeVideo[];
+
+    question = `You are a student AI assistant. Based on the following documents${
+      youtubeVideos.length > 0 ? ", YouTube video descriptions," : ""
+    } and additional images provided, answer the question: ${question}.
+
+Carefully review all documents${
+      youtubeVideos.length > 0 ? ", YouTube video descriptions," : ""
+    } and images in detail to provide a complete, much-detailed and accurate answer.
+
+${
+  youtubeVideos.length > 0
+    ? "If the question relates to a topic covered in a YouTube video, use the description and source for knowledge on the web to explain it thoroughly and in detail — as if you had watched the video — but do not mention the video, its title, or description in your answer. Provide clear, standalone explanations that are understandable without referencing the source."
+    : ""
+}
+
+If the answer is not available in the documents${
+      youtubeVideos.length > 0 ? ", YouTube video descriptions," : ""
+    } or images, clearly state that. Ensure that all provided images are also thoroughly analyzed.
+
+Response must be very detailed, clear, and easy to understand. Use proper formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability, most especially for the youtube videos.
+`;
+
     async function analyzeDocumentsAndImages() {
-      const parts: any[] = [];
+      let parts: any[] = [];
 
       // Add the user's question as a prompt
       parts.push({ text: question });
 
-      // Add PDFs
-      for (const file of pdfFiles) {
-        const pdfResp = await axios.get(file.filePath, {
-          responseType: "arraybuffer",
-        });
+      // Add YouTube videos
+      for (const video of youtubeVideos) {
         parts.push({
-          inlineData: {
-            mimeType: "application/pdf",
-            data: Buffer.from(pdfResp.data).toString("base64"),
-          },
+          text: `YouTube Video Title: ${video.title}\nDescription: ${video.description}`,
         });
       }
 
-      // Add Images
-      for (const file of imageFiles) {
-        const imageResp = await axios.get(file.filePath, {
-          responseType: "arraybuffer",
-        });
-        parts.push({
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: Buffer.from(imageResp.data).toString("base64"),
-          },
-        });
-      }
+      parts = await processFiles(parts, pdfFiles, imageFiles);
 
       const response = await ai.models.generateContent({
         model:
@@ -139,45 +166,60 @@ const userActions: userActionsInterface = {
       });
 
       res.setHeader("Content-Type", "text/plain");
-      res.send(response.text);
+      return res.send(response.text);
     }
 
     analyzeDocumentsAndImages();
   },
 
   generateMaterial: async (req: Request, res: Response) => {
-    const { topic } = req.body;
+    const { topic, word_range } = req.query;
 
     if (!topic) {
       return res.status(400).json({ error: "Bad request." });
     }
 
     try {
-      const prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least 5,000–10,000 words if necessary), educational, and rich in content.
-                            The document should:
-                            Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
-                            Provide precise definitions of all key terms and concepts, with contextual explanations.
-                            Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
-                            Include visual aids (diagrams, illustrations, tables, or charts), or clearly indicate where such visuals should be placed.
-                            Give step-by-step explanations for processes, workflows, formulas, or problem-solving techniques, with sample problems and solutions where appropriate.
-                            Include real-life use cases, industry practices, and related case studies to strengthen understanding.
-                            Provide revision tables, mnemonics, or summarized charts for key points.
-                            Include a FAQ section addressing likely student questions, misconceptions, or confusions.
-                            End with a recap of key takeaways, glossary, further reading suggestions, and practice questions or exercises with solutions.
-                            The tone should be engaging, clear, and student-friendly, assuming no prior expertise in the subject.
-                            Use proper formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability.
-                            Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.`;
+      // const prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least 5,000–10,000 words if necessary), educational, and rich in content.
+      //                       The document should:
+      //                       Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
+      //                       Provide precise definitions of all key terms and concepts, with contextual explanations.
+      //                       Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
+      //                       Include visual aids (diagrams, illustrations, tables, or charts), or clearly indicate where such visuals should be placed.
+      //                       Give step-by-step explanations for processes, workflows, formulas, or problem-solving techniques, with sample problems and solutions where appropriate.
+      //                       Include real-life use cases, industry practices, and related case studies to strengthen understanding.
+      //                       Provide revision tables, mnemonics, or summarized charts for key points.
+      //                       Include a FAQ section addressing likely student questions, misconceptions, or confusions.
+      //                       End with a recap of key takeaways, glossary, further reading suggestions, and practice questions or exercises with solutions.
+      //                       The tone should be engaging, clear, and student-friendly, assuming no prior expertise in the subject.
+      //                       Use proper formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability.
+      //                       Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.`;
+      const prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${word_range ? word_range : '5,000–10,000'} words if necessary), educational, and rich in content.
+                      The document should:
+                      - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
+                      - Provide precise definitions of all key terms and concepts, with contextual explanations.
+                      - Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
+                      - Include visual aids (diagrams, illustrations, tables, or charts) using proper Markdown image syntax, like: 
+                        ![Descriptive Alt Text](https://your-domain.com/path/to/diagram.png)  
+                        Do NOT write placeholders like [Diagram: XYZ]. Always use valid Markdown image syntax with actual images from the internet.
+                      - Give step-by-step explanations for processes, workflows, formulas, or problem-solving techniques, with sample problems and solutions where appropriate.
+                      - Include real-life use cases, industry practices, and related case studies to strengthen understanding.
+                      - Provide revision tables, mnemonics, or summarized charts for key points.
+                      - Include a FAQ section addressing likely student questions, misconceptions, or confusions.
+                      - End with a recap of key takeaways, glossary, further reading suggestions, and practice questions or exercises with solutions.
 
-      const ai = new GoogleGenAI({ apiKey: API_KEY });
+                      The tone should be engaging, clear, and student-friendly, assuming no prior expertise in the subject.
+
+                      Use proper Markdown formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability. Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-04-17",
+        model: process.env.THINKING_MODEL as string,
         contents: prompt,
       });
 
       const text = response.text;
       res.setHeader("Content-Type", "text/plain");
-      res.send(response.text);
+      return res.send(text);
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
@@ -192,75 +234,77 @@ const userActions: userActionsInterface = {
       const { workspace_id } = req.body;
       const user = req.user;
       let files: prefileInterface[] = [];
-
+  
       if (!user) {
         return res.status(401).json({ error: "Unauthorized access." });
       }
-
+  
       if (!workspace_id) {
         return res.status(400).json({ error: "Bad request." });
       }
-
+  
       const workspaceExists = await Workspace.findOne({
         where: { enc_id: workspace_id, userId: user.id },
         attributes: ["id"],
       });
-
+  
       if (!workspaceExists) {
         return res.status(404).json({ error: "Workspace not found." });
       }
-
+  
       if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
         return res.status(400).json({ error: "No files uploaded" });
       }
-
+  
+      // Validate all files first
+      for (const file of req.files) {
+        const mimeType = file.mimetype;
+        if (!mimeType.includes("pdf") && !mimeType.includes("image")) {
+          return res.status(400).json({
+            error: "Invalid file type. Only PDF and image files are allowed.",
+          });
+        }
+      }
+  
       const bucket = workspace_id;
-
+  
+      // Prepare upload promises and metadata
       const uploadPromises = (req.files as Express.Multer.File[]).map(
         (file) => {
           let key = `${Date.now()}_${file.originalname}`;
           const mimeType = file.mimetype;
-
-          if (!mimeType.includes("pdf") && !mimeType.includes("image")) {
-            return res.status(400).json({
-              error: "Invalid file type. Only PDF and image files are allowed.",
-            });
-          } else {
-            key = key.replace(/[^a-zA-Z0-9.]/g, "_");
-
-            let preFile: prefileInterface = {
-              originalname: file.originalname,
-              size: formatFileSize(file.size),
-              mimetype: mimeType,
-              url: `https://${process.env.R2_ENDPOINT_DOMAIN}/${bucket}/${key}`,
-              workspaceId: workspace_id,
-            };
-            files.push(preFile);
-          }
-
-          return uploadFile(
-            workspace_id,
-            bucket,
-            key,
-            file.buffer,
-            mimeType
-          );
+  
+          key = key.replace(/[^a-zA-Z0-9.]/g, "_");
+  
+          let preFile: prefileInterface = {
+            originalname: file.originalname,
+            size: formatFileSize(file.size),
+            mimetype: mimeType,
+            url: `https://${process.env.R2_ENDPOINT_DOMAIN}/${bucket}/${key}`,
+            workspaceId: workspace_id,
+          };
+          files.push(preFile);
+  
+          return uploadFile(workspace_id, bucket, key, file.buffer, mimeType);
         }
       );
-
+  
+      // Wait for all files to upload
       const urls = await Promise.all(uploadPromises);
-
-      files.forEach((file, index) => {
+  
+      // After upload, create database records
+      for (const file of files) {
+  
         if (file.mimetype.includes("pdf")) {
-          PDFFiles.create({
+          await PDFFiles.create({
             fileName: file.originalname,
-            size: file.size,
             workspaceId: file.workspaceId,
             userId: user.id,
             filePath: file.url,
+            size: file.size,
           });
         } else if (file.mimetype.includes("image")) {
-          ImageFiles.create({
+          await ImageFiles.create({
             fileName: file.originalname,
             size: file.size,
             workspaceId: file.workspaceId,
@@ -268,9 +312,11 @@ const userActions: userActionsInterface = {
             filePath: file.url,
           });
         }
-      });
 
-      return res.status(200).json({
+        generateDetailedContent(file.url, file.mimetype);
+      }
+  
+      return res.status(201).json({
         message: "Files uploaded successfully.",
         urls,
       });
@@ -279,14 +325,20 @@ const userActions: userActionsInterface = {
       return res.status(500).json({ error: "Server error." });
     }
   },
+  
 
   generateQuiz: async (
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
-  ) => {  
-    const { workspace_id, size } = req.body;
+  ) => {
+    const { workspace_id, name, size, duration } = req.body;
+    const user = req.user;
 
-    if (!workspace_id || !size) {
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    if (!workspace_id || !size || !name || !duration) {
       return res.status(400).json({ error: "Bad request." });
     }
 
@@ -295,42 +347,18 @@ const userActions: userActionsInterface = {
         where: { workspaceId: workspace_id },
         attributes: ["filePath"],
       });
-  
+
       const imageFiles = await ImageFiles.findAll({
         where: { workspaceId: workspace_id },
         attributes: ["filePath"],
       });
-  
+
       const prompt = `Generate a quiz with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
-      const parts: any[] = [];
-  
+      let parts: any[] = [];
+
       parts.push({ text: prompt });
 
-      // Add PDFs
-      for (const file of pdfFiles) {
-        const pdfResp = await axios.get(file.filePath, {
-          responseType: "arraybuffer",
-        });
-        parts.push({
-          inlineData: {
-            mimeType: "application/pdf",
-            data: Buffer.from(pdfResp.data).toString("base64"),
-          },
-        });
-      }
-
-      // Add Images
-      for (const file of imageFiles) {
-        const imageResp = await axios.get(file.filePath, {
-          responseType: "arraybuffer",
-        });
-        parts.push({
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: Buffer.from(imageResp.data).toString("base64"),
-          },
-        });
-      }
+      parts = await processFiles(parts, pdfFiles, imageFiles);
 
       const response = await ai.models.generateContent({
         model: process.env.THINKING_MODEL as string,
@@ -344,7 +372,8 @@ const userActions: userActionsInterface = {
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.ARRAY,
-            description: "List of quiz questions with options and correct answers.",
+            description:
+              "List of quiz questions with options and correct answers.",
             items: {
               type: Type.OBJECT,
               properties: {
@@ -368,19 +397,73 @@ const userActions: userActionsInterface = {
                 },
                 explanation: {
                   type: Type.STRING,
-                  description: "explanation why the correct answer is the correct answer based on what is in the documents and additional images provided. Make sure to describe the document reference and the image reference too.",
+                  description:
+                    "explanation why the correct answer is the correct answer based on what is in the documents and additional images provided. Make sure to describe the document reference and the image reference too.",
                   nullable: false,
                 },
               },
-              required: ["question", "options", "correct_answer", "explanation"],
+              required: [
+                "question",
+                "options",
+                "correct_answer",
+                "explanation",
+              ],
             },
-          }
-          
+          },
         },
       });
 
-      res.setHeader("Content-Type", "application/json");
-      res.send(response.text);
+      const json = JSON.parse(response.text as string);
+      let quiz_id = "";
+      if(json.length > size){
+        json.length = size;
+      }
+      Quiz.create({
+        name: name,
+        creator: user.name,
+        userId: user.id,
+        workspaceId: workspace_id,
+        duration: duration,
+      })
+        .then(async (quiz) => {
+          quiz_id = quiz.id as any;
+      
+          // Map the questions creation into an array of promises
+          const questionPromises = json.map((item: any) => {
+            return Question.create({
+              quizId: quiz.id,
+              question: item.question,
+              options: item.options,
+              correctAnswer: item.correct_answer,
+              explanation: item.explanation,
+            });
+          });
+      
+          // Wait for all question creations to complete
+          try {
+            await Promise.all(questionPromises);
+      
+            // Send response after all questions created
+            return res.status(200).json({
+              success: true,
+              quiz_id: quiz_id,
+              message: "Quiz created successfully.",
+            });
+          } catch (error) {
+            console.error("Error creating questions:", error);
+            return res.status(500).json({
+              error: "Server error.",
+              message: "Error creating questions.",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error creating quiz:", error);
+          return res.status(500).json({
+            error: "Server error.",
+            message: "Error creating quiz.",
+          });
+        });
       
     } catch (error) {
       console.error(error);
@@ -388,7 +471,7 @@ const userActions: userActionsInterface = {
     }
   },
 
-  generateFlashcards: async ( 
+  generateFlashcards: async (
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
@@ -403,42 +486,18 @@ const userActions: userActionsInterface = {
         where: { workspaceId: workspace_id },
         attributes: ["filePath"],
       });
-  
+
       const imageFiles = await ImageFiles.findAll({
         where: { workspaceId: workspace_id },
         attributes: ["filePath"],
       });
-  
+
       const prompt = `Generate a ${size} of flashcard based on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
-      const parts: any[] = [];
-  
+      let parts: any[] = [];
+
       parts.push({ text: prompt });
 
-      // Add PDFs
-      for (const file of pdfFiles) {
-        const pdfResp = await axios.get(file.filePath, {
-          responseType: "arraybuffer",
-        });
-        parts.push({
-          inlineData: {
-            mimeType: "application/pdf",
-            data: Buffer.from(pdfResp.data).toString("base64"),
-          },
-        });
-      }
-
-      // Add Images
-      for (const file of imageFiles) {
-        const imageResp = await axios.get(file.filePath, {
-          responseType: "arraybuffer",
-        });
-        parts.push({
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: Buffer.from(imageResp.data).toString("base64"),
-          },
-        });
-      }
+      parts = await processFiles(parts, pdfFiles, imageFiles);
 
       const response = await ai.models.generateContent({
         model: process.env.THINKING_MODEL as string,
@@ -471,12 +530,12 @@ const userActions: userActionsInterface = {
               },
               required: ["question", "answer"],
             },
-          }
+          },
         },
       });
 
       res.setHeader("Content-Type", "application/json");
-      res.send(response.text);
+      return res.send(response.text);
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
@@ -498,19 +557,18 @@ const userActions: userActionsInterface = {
       if (!id) {
         const workspaces = await Workspace.findAll({
           where: { userId: user.id },
-          attributes: {exclude: ['id', 'createdAt', 'updatedAt']}
+          attributes: { exclude: ["id", "createdAt", "updatedAt", "userId"] },
         });
-  
+
         return res.status(200).json({
           success: true,
           message: "Workspaces retrieved successfully.",
           workspaces,
         });
-      }
-      else{
+      } else {
         let workspace = await Workspace.findOne({
           where: { enc_id: id, userId: user.id },
-          attributes: {exclude: ['id', 'createdAt', 'updatedAt']}
+          attributes: { exclude: ["id", "createdAt", "updatedAt", "userId"] },
         });
 
         if (!workspace) {
@@ -519,30 +577,35 @@ const userActions: userActionsInterface = {
 
         const imageFiles = await ImageFiles.findAll({
           where: { workspaceId: workspace?.dataValues.enc_id },
-          attributes: ["filePath", "fileName"],
+          attributes: ["id","filePath", "fileName", "size"],
         });
-        
+
         const pdfFiles = await PDFFiles.findAll({
           where: { workspaceId: workspace?.dataValues.enc_id },
-          attributes: ["filePath", "fileName", "size"],
+          attributes: ["id","filePath", "fileName", "size"],
         });
-        
-        
+
+        const youtubeVideos = await YouTubeVideo.findAll({
+          where: { workspaceId: workspace?.dataValues.enc_id },
+          attributes: {exclude: ["id", "createdAt", "updatedAt"]},
+        });
 
         if (!workspace) {
           return res.status(404).json({ error: "Workspace not found." });
         }
 
-        const files = [
-          { imageFiles },
-          { pdfFiles },
-        ];
-      
+        const files = {
+          imageFiles,
+          pdfFiles,
+          youtubeVideos
+        };
+        
+
         workspace = {
           ...workspace.get({ plain: true }),
           files,
         };
-  
+
         return res.status(200).json({
           success: true,
           message: "Workspace retrieved successfully.",
@@ -571,11 +634,7 @@ const userActions: userActionsInterface = {
         return res.status(400).json({ error: "Bad request." });
       }
 
-      const url = `https://www.googleapis.com/youtube/v3/videos?id=${id}&key=${process.env.YOUTUBE_API_KEY}&part=snippet,contentDetails,statistics`;
-
-      const response = await axios.get(url);
-      const videoData = response.data.items[0];
-
+      const videoData = await fetchVideoData(id);
       if (!videoData) {
         return res.status(404).json({ error: "Video not found." });
       }
@@ -585,6 +644,394 @@ const userActions: userActionsInterface = {
         message: "Video retrieved successfully.",
         videoData,
       });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
+  addYoutubeVideo: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { video_id, workspace_id } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    if (!video_id || !workspace_id) {
+      return res.status(400).json({ error: "Bad request." });
+    }
+
+    try {
+      let videoData = await YouTubeVideo.findOne({
+        where: { videoId: video_id, workspaceId: workspace_id },
+      });
+
+      if (videoData) {
+        return res.status(200).json({
+          success: true,
+          message: "Video already exists.",
+          workspace_id,
+          videoData,
+        });
+      }
+
+      const ytVideoData = await fetchVideoData(video_id);
+      if (!ytVideoData) {
+        return res.status(404).json({ error: "Video does not exist." });
+      }
+
+      await YouTubeVideo.create({
+        videoId: video_id,
+        title: ytVideoData.snippet.title,
+        description: ytVideoData.snippet.description,
+        channelTitle: ytVideoData.snippet.channelTitle,
+        thumbnailUrl: ytVideoData.snippet.thumbnails.high.url,
+        viewCount: ytVideoData.statistics.viewCount,
+        likeCount: ytVideoData.statistics.likeCount,
+        commentCount: ytVideoData.statistics.commentCount,
+        duration: ytVideoData.statistics.viewCount,
+        workspaceId: workspace_id,
+      })
+        .then((video) => {
+          videoData = video;
+          return res.status(200).json({
+            success: true,
+            message: "Video added successfully.",
+            workspace_id,
+            videoData,
+          });
+        })
+        .catch((error) => {
+          console.error("Error adding video:", error);
+          return res.status(500).json({
+            error: "Server error.",
+            message: "Error adding video.",
+          });
+        });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
+  generateRandomFact: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    try {
+      const prompt = `Generate 8 unique, non-repeating educational fact from a random subject like space, biology, physics, chemistry, math, art, philosophy, literature, history, general studies, or others. Each fact should introduce fresh knowledge or context, be accurate, and not exceed 50 words. Rotate subjects frequently to ensure diversity.enerate a random educational fact ranging from philosophy to physics, math, english, general studies, history and many more for a student, providing new knowledge or context. It must be accurate and must be a different one everytime. not more than only 50 words.`;
+
+      const response = await ai.models.generateContent({
+        model: process.env.THINKING_MODEL as string,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            description: "List of random educational facts.",
+            items: {
+              type: Type.STRING,
+              description: "A random educational fact.",
+              nullable: false,
+            },
+            minimum: 8,
+            maximum: 8,
+          },
+        },
+      });
+
+      const text = response.text;
+      res.setHeader("Content-Type", "application/json");
+      return res.send(text);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
+  askChatQuestion: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { chat_body } = req.body;
+
+    if (!chat_body) {
+      return res.status(400).json({ error: "Bad request." });
+    }
+
+    const prompt = `You are an expert tutor. Carefully read the entire conversation below and identify the most recent question asked by the user.
+                      1. Provide a clear, informative, and educational answer to only that last question.
+                      2. Then, suggest 1 to 3 relevant follow-up questions the user might ask next based on the topic.
+
+                      Return your response in the following JSON format:
+                      {
+                        "answer": "<your answer here>",
+                        "suggested_questions": ["<question 1>", "<question 2>", "..."]
+                      }
+
+                      Conversation:
+                      ${chat_body}
+                      `;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: process.env.THINKING_MODEL as string,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            description:
+              "Answer to the user's last question and suggested follow-up questions.",
+            properties: {
+              answer: {
+                type: Type.STRING,
+                description:
+                  "A direct and clear answer to the user's last question.",
+              },
+              suggested_questions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.ARRAY,
+                },
+                description:
+                  "A list of relevant follow-up questions the user might ask next.",
+                minimum: 1,
+                maximum: 3,
+              },
+            },
+            required: ["answer", "suggested_questions"],
+          },
+        },
+      });
+
+      const text = response.text;
+      res.setHeader("Content-Type", "text/plain");
+      return res.send(text);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
+  suggestWorkspaceQuestion: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { workspace_id, mode, file_url } = req.body;
+    let pdfFiles: any = [];
+    let imageFiles: any = [];
+    let prompt = '';
+    let summary = '';
+
+    if(mode == "workspace"){
+      if (!workspace_id) {
+        return res.status(400).json({ error: "Bad request." });
+      }
+    }
+
+    try {
+      if(mode == 'workspace'){
+        pdfFiles = await PDFFiles.findAll({
+          where: { workspaceId: workspace_id },
+          attributes: ["filePath"],
+        });
+  
+        imageFiles = await ImageFiles.findAll({
+          where: { workspaceId: workspace_id },
+          attributes: ["filePath"],
+        });
+      }
+      else{
+        pdfFiles = await PDFFiles.findOne({
+          where: { filePath: file_url },
+          attributes: ["summary"],
+        });
+        
+        if(pdfFiles){
+          summary = pdfFiles.sumarry;
+        }
+  
+        imageFiles = await ImageFiles.findOne({
+          where: { filePath: file_url },
+          attributes: ["summary"],
+        });
+
+        if(imageFiles){
+          summary = imageFiles.dataValues.summary;
+        }
+      }
+
+      mode == 'workspace' ?
+      prompt = `Based on the provided documents and images, suggest 3 unique, contextual questions for students to ask you that require students to explain or demonstrate and deepen their understanding of the material in the workspace. Avoid questions that reference specific slides, pages, or sections directly. Focus on questions that encourage comprehension, critical thinking, and application of the content in a meaningful way.`
+      : prompt = `Based on the provided summary, suggest 3 unique, contextual questions for students to ask you that require students to explain or demonstrate and deepen their understanding of the material from the sumarry provided. Avoid questions that reference specific slides, pages, or sections directly. Focus on questions that encourage comprehension, critical thinking, and application of the content in a meaningful way.`
+
+
+      let parts: any[] = [];
+      parts.push({ text: prompt });
+
+      mode == 'workspace' ?
+      parts = await processFiles(parts, pdfFiles, imageFiles)
+      : parts.push({text: summary});
+
+      const response = await ai.models.generateContent({
+        model: process.env.REGULAR_MODEL as string,
+        contents: [
+          {
+            role: "user",
+            parts: parts,
+          },
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            description: "List of suggested questions.",
+            items: {
+              type: Type.STRING,
+              description: "questions.",
+              nullable: false,
+            },
+            minItems: "3",
+            maxItems: "3",
+          },
+        },
+      });
+
+      res.setHeader("Content-Type", "application/json");
+      return res.send(response.text);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
+  getQuiz: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { quiz_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    try {
+      if (!quiz_id) {
+        return res.status(400).json({ error: "Bad request." });
+      }
+
+      const quiz = await Quiz.findOne({
+        where: { id: quiz_id, userId: user.id },
+        attributes: { exclude: ["userId"] },
+      });
+
+      if (!quiz) {
+        return res.status(404).json({ error: "Quiz not found." });
+      }
+
+      const questions = await Question.findAll({
+        where: { quizId: quiz.id },
+        attributes: { exclude: ["createdAt", "updatedAt", "id", "quizId"] },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Quiz retrieved successfully.",
+        quiz,
+        questions,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
+  deleteFiles: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { workspace_id, file_url } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    if (!workspace_id || !file_url) {
+      return res.status(400).json({ error: "Bad request." });
+    }
+
+    try {
+      const workspaceExists = await Workspace.findOne({
+        where: { enc_id: workspace_id, userId: user.id },
+        attributes: ["id"],
+      });
+
+      
+      if (!workspaceExists) {
+        return res.status(404).json({ error: "Workspace not found." });
+      }
+
+      const fileExists = await PDFFiles.findOne({
+        where: { filePath: file_url, workspaceId: workspace_id },
+        attributes: ["filePath"],
+      });
+
+      const imageExists = await ImageFiles.findOne({
+        where: { filePath: file_url, workspaceId: workspace_id },
+        attributes: ["filePath"],
+      });
+
+      const youtubeExists = await YouTubeVideo.findOne({
+        where: { videoId: file_url, workspaceId: workspace_id },
+        attributes: ["videoId"],
+      });
+
+      if(!fileExists && !imageExists && !youtubeExists) {
+        return res.status(404).json({ error: "File not found." });
+      }
+
+      const succcesspayload = {
+        success: true,
+        message: "File deleted successfully.",
+      };
+
+
+      if(fileExists && !imageExists && !youtubeExists) {
+        await PDFFiles.destroy({
+          where: { filePath: file_url, workspaceId: workspace_id },
+        });
+
+        return res.status(200).json(succcesspayload);
+      }
+
+      else if(imageExists && !fileExists && !youtubeExists) {
+        await ImageFiles.destroy({
+          where: { filePath: file_url, workspaceId: workspace_id },
+        });
+
+        return res.status(200).json(succcesspayload);
+      }
+
+      else if(youtubeExists && !fileExists && !imageExists) {
+        await YouTubeVideo.destroy({
+          where: { videoId: file_url, workspaceId: workspace_id },
+        });
+
+        return res.status(200).json(succcesspayload);
+      }
+
+      else{
+        return res.status(400).json({ error: "Bad request." });
+      }
+
+
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
