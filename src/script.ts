@@ -80,7 +80,7 @@ app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.gener
 app.get("/api/v1/youtube/:id?", middleware.verifyToken, userActions.getYoutubeVideo);
 app.post("/api/v1/youtube", middleware.verifyToken, userActions.addYoutubeVideo);
 app.get("/api/v1/facts", middleware.verifyToken, userActions.generateRandomFact);
-app.post("/api/v1/suggestWorkspaceQuestion",middleware.verifyToken, userActions.suggestWorkspaceQuestion);
+app.post("/api/v1/suggestQuestion",middleware.verifyToken, userActions.suggestQuestion);
 app.get("/api/v1/quiz/:quiz_id?", middleware.verifyToken, userActions.getQuiz);
 
 
@@ -95,7 +95,7 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log("DB connection established");
 
-    await sequelize.sync({ force: true });
+    await sequelize.sync({ alter: true });
     console.log("Database synced");
 
     app.listen(PORT, () => {

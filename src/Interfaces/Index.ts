@@ -31,7 +31,7 @@ export interface userActionsInterface {
   addYoutubeVideo: UserActionFn;
   generateRandomFact: UserActionFn;
   askChatQuestion: UserActionFn;
-  suggestWorkspaceQuestion: UserActionFn;
+  suggestQuestion: UserActionFn;
   getQuiz: UserActionFn;
   deleteFiles: UserActionFn;
 }

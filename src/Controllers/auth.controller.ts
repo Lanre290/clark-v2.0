@@ -12,6 +12,7 @@ const NodeCache = require("node-cache");
 const otpCache = new NodeCache({ stdTTL: 0, checkperiod: 120 });
 import crypto from "crypto";
 import ForgotPassword from "../Models/forgotPassword";
+import { userSchema } from "../utils/zod.utils";
 
 
 const AuthController: AuthControllerInterface = {
@@ -201,7 +202,6 @@ const AuthController: AuthControllerInterface = {
             return res.status(400).json({ error: "Bad request." });
         }
         try {
-
             const otp = Math.floor(1000 + Math.random() * 9000);
             otpCache.set(`${email}`, otp, 7200);
             sendOTP(email, name, otp);

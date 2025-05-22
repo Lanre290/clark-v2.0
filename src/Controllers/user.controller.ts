@@ -825,7 +825,7 @@ Response must be very detailed, clear, and easy to understand. Use proper format
     }
   },
 
-  suggestWorkspaceQuestion: async (
+  suggestQuestion: async (
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
@@ -853,7 +853,7 @@ Response must be very detailed, clear, and easy to understand. Use proper format
           attributes: ["filePath"],
         });
       }
-      else{
+      else if(mode == 'file'){
         pdfFiles = await PDFFiles.findOne({
           where: { filePath: file_url },
           attributes: ["summary"],
@@ -871,6 +871,9 @@ Response must be very detailed, clear, and easy to understand. Use proper format
         if(imageFiles){
           summary = imageFiles.dataValues.summary;
         }
+      }
+      else{
+        return res.status(400).json({error: 'Bad request.', message: 'Invalid mode parameter passed.'});
       }
 
       mode == 'workspace' ?
