@@ -185,7 +185,7 @@ const AuthController: AuthControllerInterface = {
 
                 return res.status(200).json({
                     success: true,
-                    message: "Proceed to verify otp.",
+                    message: "Signup successful.",
                     user: user,
                     token: token,
                 });
