@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import Workspace from "../Models/Workspace";
 import { GoogleGenAI, Type } from "@google/genai";
-import axios from "axios";
 import { uploadFile } from "../Services/Cloudflare.services";
 import { v5 as uuidv5 } from "uuid";
 import PDFFiles from "../Models/PDFFile";
@@ -28,15 +27,22 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { name } = req.body;
+    let { name } = req.body;
     const user = req.user;
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized access." });
     }
 
-    if (!name) {
-      return res.status(400).json({ error: "Bad request." });
+    if(!name){
+      name = null;
+    }
+
+    if(name){
+      const workspaceExists = await Workspace.findOne({ where: { name, userId: user.id } });
+      if(workspaceExists){
+        return res.status(422).json({error: `A workspace named '${name}' exists.`});
+      }
     }
 
     try {
@@ -59,6 +65,7 @@ const userActions: userActionsInterface = {
             success: true,
             message: "Workspace created successfully.",
             workspace_id: hashedWorkspaceId,
+            name: workspace.name
           });
         })
         .catch((error) => {
@@ -867,8 +874,8 @@ Response must be very detailed, clear, and easy to understand. Use proper format
       }
 
       mode == 'workspace' ?
-      prompt = `Based on the provided documents and images, suggest 3 unique, contextual questions for students to ask you that require students to explain or demonstrate and deepen their understanding of the material in the workspace. Avoid questions that reference specific slides, pages, or sections directly. Focus on questions that encourage comprehension, critical thinking, and application of the content in a meaningful way.`
-      : prompt = `Based on the provided summary, suggest 3 unique, contextual questions for students to ask you that require students to explain or demonstrate and deepen their understanding of the material from the sumarry provided. Avoid questions that reference specific slides, pages, or sections directly. Focus on questions that encourage comprehension, critical thinking, and application of the content in a meaningful way.`
+      prompt = `Based on the provided documents and images, suggest 3 short unique, contextual questions for students to ask you that require students to explain or demonstrate and deepen their understanding of the material in the workspace. Avoid questions that reference specific slides, pages, or sections directly. Focus on questions that encourage comprehension, critical thinking, and application of the content in a meaningful way.`
+      : prompt = `Based on the provided summary, suggest 3 short unique, contextual questions for students to ask you that require students to explain or demonstrate and deepen their understanding of the material from the sumarry provided. Avoid questions that reference specific slides, pages, or sections directly. Focus on questions that encourage comprehension, critical thinking, and application of the content in a meaningful way.`
 
 
       let parts: any[] = [];

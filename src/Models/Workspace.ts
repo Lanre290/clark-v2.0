@@ -1,4 +1,4 @@
-import { DataTypes, Model, Sequelize } from "sequelize";
+import { DataTypes, Model, Sequelize, Op } from "sequelize";
 import sequelize from "../config/Sequelize";
 
 class Workspace extends Model {
@@ -18,7 +18,7 @@ Workspace.init(
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     userId: {
       type: DataTypes.INTEGER,
@@ -34,6 +34,22 @@ Workspace.init(
     sequelize: sequelize as Sequelize,
     tableName: "workspaces",
     modelName: "Workspace",
+
+    hooks: {
+      beforeCreate: async (workspace: any) => {
+        if (!workspace.name || workspace.name.trim() === "") {
+          const count = await Workspace.count({
+            where: {
+              name: {
+                [Op.like]: 'Untitled-%',
+              },
+              userId: workspace.userId
+            },
+          });
+          workspace.name = `Untitled-${count + 1}`;
+        }
+      },
+    },
   }
 );
 

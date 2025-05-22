@@ -17,7 +17,7 @@ import ForgotPassword from "../Models/forgotPassword";
 const AuthController: AuthControllerInterface = {
     login: async (req: Request, res: Response) => {
         let { email, password, oauth, oauth_method, oauth_token } = req.body;
-        if (!email || !password) {
+        if (!email) {
             return res.status(400).json({ error: "Bad request." });
         }
 
@@ -86,10 +86,16 @@ const AuthController: AuthControllerInterface = {
     },
 
     signup: async (req: Request, res: Response) => {
-        let { name, email, nickname, password, role, school, department, interests, study_vibe, oauth, oauth_method, oauth_token } = req.body;
+        const requestBody = req.body;
+        let { name, email, nickname, password, role, school, department, interests, study_vibe, oauth, oauth_method, oauth_token } = requestBody;
         const user_image = req.file;
-        if (!name || !email) {
-            return res.status(400).json({ error: "Bad request." });
+        let key = '';
+        const requiredKeys = ['name', 'email', 'nickname', 'password', 'role', 'school', 'department', 'interests', 'study_vibe'];
+
+        const missingKey = requiredKeys.find(key => !(key in requestBody));
+
+        if(missingKey){
+            return res.status(400).json({error: 'Bad request.', message: `${missingKey} is required.`});
         }
 
         try {
@@ -115,10 +121,6 @@ const AuthController: AuthControllerInterface = {
                 }
             }
 
-            if(!user_image){
-                return res.status(400).json({ error: "Bad request." });
-            }
-
             const existingUser = await User.findOne({ where: { email }, attributes: { exclude: ['createdAt', 'updatedAt'] } });
             if (existingUser) {
                 return res.status(409).json({ error: "User already exists." });
@@ -136,7 +138,7 @@ const AuthController: AuthControllerInterface = {
             
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            if (user_image.size > 5 * 1024 * 1024) {
+            if (user_image && user_image.size > 5 * 1024 * 1024) {
                 return res.status(400).json({ error: "File size exceeds 5MB." });
             }
 
@@ -146,13 +148,15 @@ const AuthController: AuthControllerInterface = {
             }
 
 
-            const bucket = 'clarkuser'
-            let key = `${Date.now()}_${user_image.originalname}`;
-            const mimeType = user_image.mimetype;
-            
-            key = key.replace(/[^a-zA-Z0-9.]/g, "_");
+            if(user_image){
+                const bucket = 'clarkuser'
+                key = `${Date.now()}_${user_image.originalname}`;
+                const mimeType = user_image.mimetype;
+                
+                key = key.replace(/[^a-zA-Z0-9.]/g, "_");
 
-            uploadUserPicture(bucket, key, user_image.buffer, mimeType);
+                uploadUserPicture(bucket, key, user_image.buffer, mimeType);
+            }
 
             const user = {
                 name,
@@ -163,7 +167,7 @@ const AuthController: AuthControllerInterface = {
                 password: hashedPassword,
                 department,
                 interests,
-                image_url: `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}`,
+                image_url: user_image ? user_image : `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}`,
                 study_vibe
             }
 

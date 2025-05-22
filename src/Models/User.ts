@@ -58,9 +58,9 @@ User.init(
       defaultValue: "",
     },
     interests: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: "",
+      defaultValue: [],
     },
     study_vibe: {
       type: DataTypes.STRING,

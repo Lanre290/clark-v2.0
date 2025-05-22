@@ -80,10 +80,12 @@ app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.gener
 app.get("/api/v1/youtube/:id?", middleware.verifyToken, userActions.getYoutubeVideo);
 app.post("/api/v1/youtube", middleware.verifyToken, userActions.addYoutubeVideo);
 app.get("/api/v1/facts", middleware.verifyToken, userActions.generateRandomFact);
-app.post("/api/v1/chat", middleware.verifyToken, userActions.askChatQuestion);
 app.post("/api/v1/suggestWorkspaceQuestion",middleware.verifyToken, userActions.suggestWorkspaceQuestion);
 app.get("/api/v1/quiz/:quiz_id?", middleware.verifyToken, userActions.getQuiz);
 
+
+
+app.post("/api/v1/chat", middleware.verifyToken, userActions.askChatQuestion);
 
 console.log("starting server...");
 
