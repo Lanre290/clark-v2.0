@@ -168,7 +168,7 @@ const AuthController: AuthControllerInterface = {
                 password: hashedPassword,
                 department,
                 interests,
-                image_url: user_image ? user_image : `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}`,
+                image_url: user_image ? '' : `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}`,
                 study_vibe
             }
 
