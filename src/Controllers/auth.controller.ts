@@ -156,7 +156,7 @@ const AuthController: AuthControllerInterface = {
                 
                 key = key.replace(/[^a-zA-Z0-9.]/g, "_");
 
-                uploadUserPicture(bucket, key, user_image.buffer, mimeType);
+                await uploadUserPicture(bucket, key, user_image.buffer, mimeType);
             }
 
             const user = {
@@ -172,7 +172,7 @@ const AuthController: AuthControllerInterface = {
                 study_vibe
             }
 
-            User.create({
+            await User.create({
                 ...user,
             }).then((user) => {
                 delete user.dataValues.password;
