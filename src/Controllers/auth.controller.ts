@@ -99,6 +99,8 @@ const AuthController: AuthControllerInterface = {
             return res.status(400).json({error: 'Bad request.', message: `${missingKey} is required.`});
         }
 
+        
+
         try {
             if(oauth && oauth_method && oauth_token) {
                 password = '';

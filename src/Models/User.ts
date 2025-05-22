@@ -58,14 +58,14 @@ User.init(
       defaultValue: "",
     },
     interests: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: [],
-    },
-    study_vibe: {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: "",
+    },
+    study_vibe: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: [],
     },
     image_url: {
       type: DataTypes.STRING,
