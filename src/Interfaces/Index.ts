@@ -30,10 +30,10 @@ export interface userActionsInterface {
   getYoutubeVideo: UserActionFn;
   addYoutubeVideo: UserActionFn;
   generateRandomFact: UserActionFn;
-  askChatQuestion: UserActionFn;
   suggestQuestion: UserActionFn;
   getQuiz: UserActionFn;
   deleteFiles: UserActionFn;
+  getFile: UserActionFn;
 }
 
 export interface AuthControllerInterface {

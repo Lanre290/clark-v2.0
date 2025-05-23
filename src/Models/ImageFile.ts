@@ -2,7 +2,7 @@ import { DataTypes, Model, Sequelize } from "sequelize";
 import sequelize from "../config/Sequelize";
 
 class ImageFiles extends Model {
-  public id!: number;
+  public id!: string;
   public workspaceId!: string;
   public userId!: string;
   public filePath!: string;
@@ -13,8 +13,8 @@ class ImageFiles extends Model {
 ImageFiles.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
     fileName: {

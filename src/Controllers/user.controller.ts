@@ -17,6 +17,8 @@ import { processFiles } from "../utils/fileHandler.utils";
 import { GEMINI_API_KEY, generateDetailedContent } from "../utils/gemini.utils";
 import Quiz from "../Models/quiz";
 import Question from "../Models/question";
+import Chats from "../Models/Chat";
+import Messages from "../Models/Message";
 
 const ai = new GoogleGenAI({
   apiKey: GEMINI_API_KEY,
@@ -33,6 +35,7 @@ const userActions: userActionsInterface = {
     if (!user) {
       return res.status(401).json({ error: "Unauthorized access." });
     }
+    console.log(user);
 
     if(!name){
       name = null;
@@ -85,9 +88,18 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    let { question, workspace_id, thinking } = req.body;
+    let { question, workspace_id, thinking, mode, file_id } = req.body;
+    let pdfFiles: PDFFiles[] | null = [];
+    let imageFiles: ImageFiles[] | null = [];
+    let youtubeVideos: YouTubeVideo[] | null = [];
 
-    if (!question || !workspace_id) {
+    const user = req.user;
+
+    if(!user){
+      return res.status(401).json({error: 'Unauthorized access.'});
+    }
+
+    if (!question) {
       return res.status(400).json({ error: "Bad request." });
     }
 
@@ -95,54 +107,90 @@ const userActions: userActionsInterface = {
       thinking = false;
     }
 
-    const workspaceExists = await Workspace.findOne({
-      where: { enc_id: workspace_id },
-      attributes: ["id"],
-    });
-
-    if (!workspaceExists) {
-      return res.status(404).json({ error: "Workspace not found." });
+    if(mode == 'workspace' && !workspace_id){
+      return res.status(400).json({error: 'Bad request.'});
     }
 
-    const pdfFiles = await PDFFiles.findAll({
-      where: { workspaceId: workspace_id },
-      attributes: ["filePath"],
-    });
+    if(mode == 'file' && !file_id){
+      return res.status(400).json({error: 'Bad request.'});
+    }
 
-    const imageFiles = await ImageFiles.findAll({
-      where: { workspaceId: workspace_id },
-      attributes: ["filePath"],
-    });
+    if(mode == 'workspace'){
+      const workspaceExists = await Workspace.findOne({
+        where: { enc_id: workspace_id },
+        attributes: ["id"],
+      });
 
-    let youtubeVideos = await YouTubeVideo.findAll({
-      where: { workspaceId: workspace_id },
-      attributes: ["description", "title"],
-    });
+      if (!workspaceExists) {
+        return res.status(404).json({ error: "Workspace not found." });
+      }
 
-    youtubeVideos = youtubeVideos.map(
-      (video) => video.dataValues
-    ) as unknown as YouTubeVideo[];
 
-    question = `You are a student AI assistant. Based on the following documents${
-      youtubeVideos.length > 0 ? ", YouTube video descriptions," : ""
-    } and additional images provided, answer the question: ${question}.
+      pdfFiles = await PDFFiles.findAll({
+        where: { workspaceId: workspace_id },
+        attributes: ["filePath"],
+      });
+  
+      imageFiles = await ImageFiles.findAll({
+        where: { workspaceId: workspace_id },
+        attributes: ["filePath"],
+      });
+  
+      youtubeVideos = await YouTubeVideo.findAll({
+        where: { workspaceId: workspace_id },
+        attributes: ["description", "title"],
+      });
+  
+      youtubeVideos = youtubeVideos.map(
+        (video) => video.dataValues
+      ) as unknown as YouTubeVideo[];
 
-Carefully review all documents${
-      youtubeVideos.length > 0 ? ", YouTube video descriptions," : ""
-    } and images in detail to provide a complete, much-detailed and accurate answer.
+      question = `You are a student AI assistant. Based on the following:
 
-${
-  youtubeVideos.length > 0
-    ? "If the question relates to a topic covered in a YouTube video, use the description and source for knowledge on the web to explain it thoroughly and in detail — as if you had watched the video — but do not mention the video, its title, or description in your answer. Provide clear, standalone explanations that are understandable without referencing the source."
-    : ""
-}
+                - Provided documents
+                ${youtubeVideos.length > 0 ? "- YouTube video descriptions\n" : ""}- Uploaded images
 
-If the answer is not available in the documents${
-      youtubeVideos.length > 0 ? ", YouTube video descriptions," : ""
-    } or images, clearly state that. Ensure that all provided images are also thoroughly analyzed.
+                Answer the following question: ${question}.
 
-Response must be very detailed, clear, and easy to understand. Use proper formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability, most especially for the youtube videos.
-`;
+                Thoroughly analyze all sources:
+                - Review all documents${youtubeVideos.length > 0 ? ", YouTube video descriptions," : ""} and uploaded images in detail.
+                - Use the conversation in previous_messages to understand the user's context, goals, prior questions, and your past responses. This helps ensure continuity and relevance in your answer.
+
+                ${youtubeVideos.length > 0 ? `If the question relates to a topic covered in a YouTube video, use the video description and your general web knowledge to answer thoroughly — as if you had watched the video — but **do not mention** the video, its title, or description. Your explanation must be standalone and clear.` : ""}
+
+                If the answer cannot be found in the documents${youtubeVideos.length > 0 ? ", YouTube descriptions," : ""}, uploaded images, or previous_messages, explicitly state that.
+
+                Your response must be:
+                - Very detailed and accurate
+                - Clear and easy to understand
+                - Well-structured: use section headings, subheadings, bullet points, code blocks (if needed), and appropriate spacing for high readability.`;
+
+    }
+    else if(mode == 'file'){
+      pdfFiles = await PDFFiles.findAll({where: {id: file_id}});
+      imageFiles = await ImageFiles.findAll({where: {id: file_id}});
+      
+      question = `You are a helpful AI assistant for students.
+
+                  Use **only** the provided context to answer the following question: ${question}.
+
+                  You are provided with:
+                  - Documents (text, PDFs, etc.)
+                  ${youtubeVideos.length > 0 ? "- YouTube video descriptions\n" : ""}- Uploaded images
+
+                  Do **not** use any external knowledge or training beyond the given context.
+
+                  ${youtubeVideos.length > 0 ? `If the question relates to a topic covered in a YouTube video, use only the description to answer — but **do not mention** the video or its source.` : ""}
+
+                  If the answer cannot be found in the provided documents, images, or conversation history, clearly state that the information is not available.
+
+                  Your answer must be:
+                  - Accurate and based solely on the provided context
+                  - Clear, well-explained, and easy to understand
+                  - Structured with headings, subheadings, bullet points, and code blocks where appropriate for readability.`;
+
+    }
+
 
     async function analyzeDocumentsAndImages() {
       let parts: any[] = [];
@@ -151,19 +199,18 @@ Response must be very detailed, clear, and easy to understand. Use proper format
       parts.push({ text: question });
 
       // Add YouTube videos
-      for (const video of youtubeVideos) {
-        parts.push({
-          text: `YouTube Video Title: ${video.title}\nDescription: ${video.description}`,
-        });
+      if(youtubeVideos){
+        for (const video of youtubeVideos) {
+          parts.push({
+            text: `YouTube Video Title: ${video.title}\nDescription: ${video.description}`,
+          });
+        }
       }
 
       parts = await processFiles(parts, pdfFiles, imageFiles);
 
       const response = await ai.models.generateContent({
-        model:
-          thinking == true
-            ? (process.env.THINKING_MODEL as string)
-            : (process.env.REGULAR_MODEL as string),
+        model: process.env.THINKING_MODEL as string,
         contents: [
           {
             role: "user",
@@ -171,9 +218,10 @@ Response must be very detailed, clear, and easy to understand. Use proper format
           },
         ],
       });
+      const aiResponse = response.text;
 
       res.setHeader("Content-Type", "text/plain");
-      return res.send(response.text);
+      return res.send(aiResponse);
     }
 
     analyzeDocumentsAndImages();
@@ -760,71 +808,6 @@ Response must be very detailed, clear, and easy to understand. Use proper format
     }
   },
 
-  askChatQuestion: async (
-    req: Request & afterVerificationMiddlerwareInterface,
-    res: Response
-  ) => {
-    const { chat_body } = req.body;
-
-    if (!chat_body) {
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    const prompt = `You are an expert tutor. Carefully read the entire conversation below and identify the most recent question asked by the user.
-                      1. Provide a clear, informative, and educational answer to only that last question.
-                      2. Then, suggest 1 to 3 relevant follow-up questions the user might ask next based on the topic.
-
-                      Return your response in the following JSON format:
-                      {
-                        "answer": "<your answer here>",
-                        "suggested_questions": ["<question 1>", "<question 2>", "..."]
-                      }
-
-                      Conversation:
-                      ${chat_body}
-                      `;
-
-    try {
-      const response = await ai.models.generateContent({
-        model: process.env.THINKING_MODEL as string,
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            description:
-              "Answer to the user's last question and suggested follow-up questions.",
-            properties: {
-              answer: {
-                type: Type.STRING,
-                description:
-                  "A direct and clear answer to the user's last question.",
-              },
-              suggested_questions: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.ARRAY,
-                },
-                description:
-                  "A list of relevant follow-up questions the user might ask next.",
-                minimum: 1,
-                maximum: 3,
-              },
-            },
-            required: ["answer", "suggested_questions"],
-          },
-        },
-      });
-
-      const text = response.text;
-      res.setHeader("Content-Type", "text/plain");
-      return res.send(text);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Server error." });
-    }
-  },
-
   suggestQuestion: async (
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
@@ -1047,6 +1030,38 @@ Response must be very detailed, clear, and easy to understand. Use proper format
       return res.status(500).json({ error: "Server error." });
     }
   },
+
+  getFile:  async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { file_id } = req.params;
+    const user = req.user;
+    let file;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    file = await ImageFiles.findOne({
+      where: { id: file_id },
+      attributes: ["id","filePath", "fileName", "size"],
+    });
+
+    if(!file){
+      file = await PDFFiles.findOne({
+        where: { id: file_id },
+        attributes: ["id","filePath", "fileName", "size"],
+      });
+    }
+
+    if(!file){
+      return res.status(404).json({error: 'File not found.'});
+    }
+
+    return res.status(200).json({success: true, file});
+
+  }
 };
 
 export default userActions;

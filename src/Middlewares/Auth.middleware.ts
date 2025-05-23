@@ -23,6 +23,7 @@ const AuthMiddleware ={
           }
       
           const user = await User.findOne({ where: { email } });
+          
           if (!user) {
               return res.status(401).json({ success: false, error: "Unauthorized access." });
           }
