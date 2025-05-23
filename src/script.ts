@@ -83,10 +83,6 @@ app.get("/api/v1/facts", middleware.verifyToken, userActions.generateRandomFact)
 app.post("/api/v1/suggestQuestion",middleware.verifyToken, userActions.suggestQuestion);
 app.get("/api/v1/quiz/:quiz_id?", middleware.verifyToken, userActions.getQuiz);
 
-
-
-app.post("/api/v1/chat", middleware.verifyToken, userActions.askChatQuestion);
-
 console.log("starting server...");
 
 
