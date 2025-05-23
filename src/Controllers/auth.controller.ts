@@ -79,7 +79,7 @@ const AuthController: AuthControllerInterface = {
                 success: true,
                 message: "Login successful.",
                 user: user,
-                toke: token,
+                token: token,
             });
         } catch (error) {
             console.error(error);
@@ -99,8 +99,6 @@ const AuthController: AuthControllerInterface = {
         if(missingKey){
             return res.status(400).json({error: 'Bad request.', message: `${missingKey} is required.`});
         }
-
-        
 
         try {
             if(oauth && oauth_method && oauth_token) {
