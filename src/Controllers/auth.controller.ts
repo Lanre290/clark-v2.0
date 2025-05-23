@@ -70,6 +70,7 @@ const AuthController: AuthControllerInterface = {
 
             delete user.dataValues.password;
             delete user.dataValues.id;
+
             const token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
                 expiresIn: "90d",
             });
@@ -170,7 +171,7 @@ const AuthController: AuthControllerInterface = {
                 password: hashedPassword,
                 department,
                 interests,
-                image_url: user_image ? '' : `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}`,
+                image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
                 study_vibe
             }
 
