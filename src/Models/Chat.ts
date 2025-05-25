@@ -2,20 +2,20 @@ import { DataTypes, Sequelize, Model, Op } from "sequelize";
 import sequelize from '.././config/Sequelize';
 
 class Chats extends Model {
-    public id!: number;
-    public userId!: number;
+    public id!: string;
+    public userId?: number;
     public workspaceId!: string;
-    public createdAt!: Date;
-    public updatedAt!: Date;
+    public createdAt?: Date;
+    public updatedAt?: Date;
 }
 
 Chats.init(
     {
         id: {
-            type: DataTypes.INTEGER,
-            autoIncrement: true,
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
-        },
+          },
         userId: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -25,9 +25,9 @@ Chats.init(
             allowNull: true,
             defaultValue: null
         },
-        title: {
+        name: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         }
     },
     {
@@ -43,7 +43,8 @@ Chats.init(
                     name: {
                     [Op.like]: 'Untitled-%',
                     },
-                    userId: chat.userId
+                    userId: chat.userId,
+                    workspaceId: chat.workspaceId
                 },
                 });
                 chat.name = `Untitled-${count + 1}`;

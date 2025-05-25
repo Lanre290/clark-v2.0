@@ -3,8 +3,11 @@ import sequelize from '.././config/Sequelize';
 
 class Messages extends Model {
     public id!: number;
-    public userId!: number;
-    public workspaceId!: string;
+    public text!: string;
+    public chatId!: string;
+    public forUser!: boolean;
+    public fromUser!: boolean;
+    public isFile!: boolean;
     public createdAt!: Date;
     public updatedAt!: Date;
 }
@@ -17,27 +20,21 @@ Messages.init(
             primaryKey: true,
         },
         text: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT,
             allowNull: false,
         },
         chatId: {
             type: DataTypes.STRING,
             allowNull: false
         },
+        fromUser: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+        },
         isFile: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: false
-        },
-        file_ref: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            defaultValue: ''
-        },
-        fileType: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            defaultValue: ''
         },
     },
     {

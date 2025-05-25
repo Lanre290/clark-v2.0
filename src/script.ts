@@ -84,6 +84,12 @@ app.post("/api/v1/suggestQuestion",middleware.verifyToken, userActions.suggestQu
 app.get("/api/v1/quiz/:quiz_id?", middleware.verifyToken, userActions.getQuiz);
 app.get("/api/v1/files/:file_id?", middleware.verifyToken, userActions.getFile);
 
+app.post("/api/v1/ai_chat", middleware.verifyToken, userActions.sendChat);
+app.post("/api/v1/chats", middleware.verifyToken, userActions.createChat);
+
+app.post("/api/v1/aichat", middleware.verifyToken, upload.array('files', 10), userActions.sendChat);
+app.get("/api/v1/aichat", middleware.verifyToken, userActions.getChat)
+
 console.log("starting server...");
 
 
@@ -92,7 +98,7 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log("DB connection established");
 
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: true });
     console.log("Database synced");
 
     app.listen(PORT, () => {

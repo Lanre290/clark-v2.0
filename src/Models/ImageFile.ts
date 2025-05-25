@@ -25,6 +25,10 @@ ImageFiles.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    chatId: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     userId: {
       type: DataTypes.STRING,
       allowNull: false,

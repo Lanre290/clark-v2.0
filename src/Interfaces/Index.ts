@@ -34,6 +34,9 @@ export interface userActionsInterface {
   getQuiz: UserActionFn;
   deleteFiles: UserActionFn;
   getFile: UserActionFn;
+  sendChat: UserActionFn;
+  createChat: UserActionFn;
+  getChat: UserActionFn;
 }
 
 export interface AuthControllerInterface {
