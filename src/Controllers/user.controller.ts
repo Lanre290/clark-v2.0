@@ -40,18 +40,18 @@ const userActions: userActionsInterface = {
       name = null;
     }
 
-    if (name) {
-      const workspaceExists = await Workspace.findOne({
-        where: { name, userId: user.id },
-      });
-      if (workspaceExists) {
-        return res
-          .status(422)
-          .json({ error: `A workspace named '${name}' exists.` });
-      }
-    }
-
     try {
+      if (name) {
+        const workspaceExists = await Workspace.findOne({
+          where: { name, userId: user.id },
+        });
+        if (workspaceExists) {
+          return res
+            .status(422)
+            .json({ error: `A workspace named '${name}' exists.` });
+        }
+      }
+
       Workspace.create({
         name: name,
         userId: user.id,
@@ -117,161 +117,165 @@ const userActions: userActionsInterface = {
       thinking = false;
     }
 
-    if (mode == "workspace" && !workspace_id) {
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    if (mode == "file" && !file_id) {
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    if (mode == "workspace") {
-      const workspaceExists = await Workspace.findOne({
-        where: { enc_id: workspace_id },
-        attributes: ["id"],
-      });
-
-      if (!workspaceExists) {
-        return res.status(404).json({ error: "Workspace not found." });
+    try {
+      if (mode == "workspace" && !workspace_id) {
+        return res.status(400).json({ error: "Bad request." });
       }
-
-      pdfFiles = await PDFFiles.findAll({
-        where: { workspaceId: workspace_id, chatId: null },
-        attributes: ["filePath"],
-      });
-
-      imageFiles = await ImageFiles.findAll({
-        where: { workspaceId: workspace_id, chatId: null },
-        attributes: ["filePath"],
-      });
-
-      youtubeVideos = await YouTubeVideo.findAll({
-        where: { workspaceId: workspace_id },
-        attributes: ["description", "title"],
-      });
-
-      youtubeVideos = youtubeVideos.map(
-        (video) => video.dataValues
-      ) as unknown as YouTubeVideo[];
-
-      question = `You are a student AI assistant. Based on the following:
-
-                - Provided documents
-                ${
-                  youtubeVideos.length > 0
-                    ? "- YouTube video descriptions\n"
-                    : ""
-                }- Uploaded images
-
-                Answer the following question: ${question}.
-
-                Thoroughly analyze all sources:
-                - Review all documents${
-                  youtubeVideos.length > 0
-                    ? ", YouTube video descriptions,"
-                    : ""
-                } and uploaded images in detail.
-                - Use the conversation in previous_messages to understand the user's context, goals, prior questions, and your past responses. This helps ensure continuity and relevance in your answer.
-
-                ${
-                  youtubeVideos.length > 0
-                    ? `If the question relates to a topic covered in a YouTube video, use the video description and your general web knowledge to answer thoroughly — as if you had watched the video — but **do not mention** the video, its title, or description. Your explanation must be standalone and clear.`
-                    : ""
-                }
-
-                If the answer cannot be found in the documents${
-                  youtubeVideos.length > 0 ? ", YouTube descriptions," : ""
-                }, uploaded images, or previous_messages, explicitly state that.
-
-                Your response must be:
-                - Very detailed and accurate
-                - Clear and easy to understand
-                - Well-structured: use section headings, subheadings, bullet points, code blocks (if needed), and appropriate spacing for high readability.`;
-    } else if (mode == "file") {
-      pdfFiles = await PDFFiles.findAll({ where: { id: file_id } });
-      imageFiles = await ImageFiles.findAll({ where: { id: file_id } });
-
-      question = `You are a helpful AI assistant for students.
-
-                  Use **only** the provided context to answer the following question: ${question}.
-
-                  You are provided with:
-                  - Documents (text, PDFs, etc.)
+  
+      if (mode == "file" && !file_id) {
+        return res.status(400).json({ error: "Bad request." });
+      }
+  
+      if (mode == "workspace") {
+        const workspaceExists = await Workspace.findOne({
+          where: { enc_id: workspace_id },
+          attributes: ["id"],
+        });
+  
+        if (!workspaceExists) {
+          return res.status(404).json({ error: "Workspace not found." });
+        }
+  
+        pdfFiles = await PDFFiles.findAll({
+          where: { workspaceId: workspace_id, chatId: null },
+          attributes: ["filePath"],
+        });
+  
+        imageFiles = await ImageFiles.findAll({
+          where: { workspaceId: workspace_id, chatId: null },
+          attributes: ["filePath"],
+        });
+  
+        youtubeVideos = await YouTubeVideo.findAll({
+          where: { workspaceId: workspace_id },
+          attributes: ["description", "title"],
+        });
+  
+        youtubeVideos = youtubeVideos.map(
+          (video) => video.dataValues
+        ) as unknown as YouTubeVideo[];
+  
+        question = `You are a student AI assistant. Based on the following:
+  
+                  - Provided documents
                   ${
                     youtubeVideos.length > 0
                       ? "- YouTube video descriptions\n"
                       : ""
                   }- Uploaded images
-
-                  Do **not** use any external knowledge or training beyond the given context.
-
+  
+                  Answer the following question: ${question}.
+  
+                  Thoroughly analyze all sources:
+                  - Review all documents${
+                    youtubeVideos.length > 0
+                      ? ", YouTube video descriptions,"
+                      : ""
+                  } and uploaded images in detail.
+                  - Use the conversation in previous_messages to understand the user's context, goals, prior questions, and your past responses. This helps ensure continuity and relevance in your answer.
+  
                   ${
                     youtubeVideos.length > 0
-                      ? `If the question relates to a topic covered in a YouTube video, use only the description to answer — but **do not mention** the video or its source.`
+                      ? `If the question relates to a topic covered in a YouTube video, use the video description and your general web knowledge to answer thoroughly — as if you had watched the video — but **do not mention** the video, its title, or description. Your explanation must be standalone and clear.`
                       : ""
                   }
-
-                  If the answer cannot be found in the provided documents, images, or conversation history, clearly state that the information is not available.
-
-                  Your answer must be:
-                  - Accurate and based solely on the provided context
-                  - Clear, well-explained, and easy to understand
-                  - Structured with headings, subheadings, bullet points, and code blocks where appropriate for readability.`;
-    }
-
-    async function analyzeDocumentsAndImages() {
-      let parts: any[] = [];
-
-      // Add the user's question as a prompt
-      parts.push({ text: question });
-
-      // Add YouTube videos
-      if (youtubeVideos) {
-        for (const video of youtubeVideos) {
-          parts.push({
-            text: `YouTube Video Title: ${video.title}\nDescription: ${video.description}`,
-          });
-        }
+  
+                  If the answer cannot be found in the documents${
+                    youtubeVideos.length > 0 ? ", YouTube descriptions," : ""
+                  }, uploaded images, or previous_messages, explicitly state that.
+  
+                  Your response must be:
+                  - Very detailed and accurate
+                  - Clear and easy to understand
+                  - Well-structured: use section headings, subheadings, bullet points, code blocks (if needed), and appropriate spacing for high readability.`;
+      } else if (mode == "file") {
+        pdfFiles = await PDFFiles.findAll({ where: { id: file_id } });
+        imageFiles = await ImageFiles.findAll({ where: { id: file_id } });
+  
+        question = `You are a helpful AI assistant for students.
+  
+                    Use **only** the provided context to answer the following question: ${question}.
+  
+                    You are provided with:
+                    - Documents (text, PDFs, etc.)
+                    ${
+                      youtubeVideos.length > 0
+                        ? "- YouTube video descriptions\n"
+                        : ""
+                    }- Uploaded images
+  
+                    Do **not** use any external knowledge or training beyond the given context.
+  
+                    ${
+                      youtubeVideos.length > 0
+                        ? `If the question relates to a topic covered in a YouTube video, use only the description to answer — but **do not mention** the video or its source.`
+                        : ""
+                    }
+  
+                    If the answer cannot be found in the provided documents, images, or conversation history, clearly state that the information is not available.
+  
+                    Your answer must be:
+                    - Accurate and based solely on the provided context
+                    - Clear, well-explained, and easy to understand
+                    - Structured with headings, subheadings, bullet points, and code blocks where appropriate for readability.`;
       }
-
-      parts = await processFiles(parts, pdfFiles, imageFiles);
-
-      const response = await ai.models.generateContent({
-        model: process.env.THINKING_MODEL as string,
-        contents: [
-          {
-            role: "user",
-            parts: parts,
-          },
-        ],
-      });
-      const aiResponse = response.text;
-
-      await Chats.findOne({where: {workspaceId: workspace_id}})
-            .then(async (chat) => {
-              await Messages.bulkCreate(
-                [
-                  {
-                    text: userOriginalQuestion,
-                    chatId: chat?.id,
-                    fromUser: true,
-                    isFile: false,
-                  },
-                  {
-                    text: aiResponse,
-                    chatId: chat?.id,
-                    fromUser: false,
-                    isFile: false,
-                  }
-                ]
-              );
-            })
-
-      res.setHeader("Content-Type", "text/plain");
-      return res.send(aiResponse);
+  
+      async function analyzeDocumentsAndImages() {
+        let parts: any[] = [];
+  
+        // Add the user's question as a prompt
+        parts.push({ text: question });
+  
+        // Add YouTube videos
+        if (youtubeVideos) {
+          for (const video of youtubeVideos) {
+            parts.push({
+              text: `YouTube Video Title: ${video.title}\nDescription: ${video.description}`,
+            });
+          }
+        }
+  
+        parts = await processFiles(parts, pdfFiles, imageFiles);
+  
+        const response = await ai.models.generateContent({
+          model: process.env.THINKING_MODEL as string,
+          contents: [
+            {
+              role: "user",
+              parts: parts,
+            },
+          ],
+        });
+        const aiResponse = response.text;
+  
+        await Chats.findOne({where: {workspaceId: workspace_id}})
+              .then(async (chat) => {
+                await Messages.bulkCreate(
+                  [
+                    {
+                      text: userOriginalQuestion,
+                      chatId: chat?.id,
+                      fromUser: true,
+                      isFile: false,
+                    },
+                    {
+                      text: aiResponse,
+                      chatId: chat?.id,
+                      fromUser: false,
+                      isFile: false,
+                    }
+                  ]
+                );
+              })
+  
+        res.setHeader("Content-Type", "text/plain");
+        return res.send(aiResponse);
+      }
+  
+      analyzeDocumentsAndImages();
+    } catch (error) {
+      return res.status(500).json({error: 'Server error.'});
     }
-
-    analyzeDocumentsAndImages();
   },
 
   generateMaterial: async (req: Request, res: Response) => {
@@ -1090,23 +1094,27 @@ const userActions: userActionsInterface = {
       return res.status(401).json({ error: "Unauthorized access." });
     }
 
-    file = await ImageFiles.findOne({
-      where: { id: file_id },
-      attributes: ["id", "filePath", "fileName", "size"],
-    });
-
-    if (!file) {
-      file = await PDFFiles.findOne({
+    try {
+      file = await ImageFiles.findOne({
         where: { id: file_id },
         attributes: ["id", "filePath", "fileName", "size"],
       });
+  
+      if (!file) {
+        file = await PDFFiles.findOne({
+          where: { id: file_id },
+          attributes: ["id", "filePath", "fileName", "size"],
+        });
+      }
+  
+      if (!file) {
+        return res.status(404).json({ error: "File not found." });
+      }
+  
+      return res.status(200).json({ success: true, file });
+    } catch (error) {
+      return res.status(500).json({error: 'Server error.'});
     }
-
-    if (!file) {
-      return res.status(404).json({ error: "File not found." });
-    }
-
-    return res.status(200).json({ success: true, file });
   },
 
   sendChat: async (
@@ -1115,183 +1123,183 @@ const userActions: userActionsInterface = {
   ) => {
     try {
       let { chat_id, text, previous_messages, strict_mode } = req.body;
-    const user = req.user;
-    const files = req.files;
+      const user = req.user;
+      const files = req.files;
 
-    if (!user || !user.id) {
-      return res.status(401).json({ error: "Unauthorized access." });
-    }
+      if (!user || !user.id) {
+        return res.status(401).json({ error: "Unauthorized access." });
+      }
 
-    if (files && files != undefined && (files.length as number) > 10) {
-      return res
-        .status(400)
-        .json({
-          error: "Bad request",
-          message: "File to be uploaded at the same time cannot exceed 10.",
+      if (files && files != undefined && (files.length as number) > 10) {
+        return res
+          .status(400)
+          .json({
+            error: "Bad request",
+            message: "File to be uploaded at the same time cannot exceed 10.",
+          });
+      }
+
+      const prompt = `You are a highly intelligent assistant. Please answer the user's question using the following rules:
+
+                      1. If any files are provided, use them as your **primary source**.
+                      2. If no files are provided but there is a previous conversation, use that as context.
+                      3. ${
+                        strict_mode
+                          ? "**Strict Mode is ON**: Only rely on the provided files, if provided. Do not use outside knowledge."
+                          : "**Strict Mode is OFF**: You may supplement with outside knowledge if needed."
+                      }
+                      4. If neither files nor conversation are provided, answer the question using your general knowledge.
+
+                      📌 Format your response to be:
+                      - **Well-organized** and easy to read
+                      - Use **headings**, **horizontal lines (---)**, **bullet points**, **numbered steps**, **tables**, or **ASCII diagrams** when helpful
+                      - Be visually pleasant and “sweet” to look at, even if technical
+
+                      ---
+
+                      ${
+                        files?.length
+                          ? `🗂️ Files have been provided. Use them as your primary reference.`
+                          : previous_messages?.trim()
+                          ? `💬 Previous conversation:\n${previous_messages}`
+                          : `❗ No prior context is available.`
+                      }
+
+                      ---
+
+                      RESPOND IN PURE CLEAN MARKDOWN TEXT FORMAT❗❗❗
+
+                      ❓ **User Question:**
+                      ${text}
+                      `;
+
+
+
+
+      // create chat if its not provided.
+      if (!chat_id) {
+        await Chats.create({
+          userId: user.id,
+        }).then((chat) => {
+          chat_id = chat.id;
         });
-    }
+      }
 
-    const prompt = `You are a highly intelligent assistant. Please answer the user's question using the following rules:
+      let parts: any[] = [];
+      parts.push({ text: prompt });
 
-                    1. If any files are provided, use them as your **primary source**.
-                    2. If no files are provided but there is a previous conversation, use that as context.
-                    3. ${
-                      strict_mode
-                        ? "**Strict Mode is ON**: Only rely on the provided files, if provided. Do not use outside knowledge."
-                        : "**Strict Mode is OFF**: You may supplement with outside knowledge if needed."
-                    }
-                    4. If neither files nor conversation are provided, answer the question using your general knowledge.
+      const filesArray: { url: string } & Express.Multer.File[] =
+        [] as any;
 
-                    📌 Format your response to be:
-                    - **Well-organized** and easy to read
-                    - Use **headings**, **horizontal lines (---)**, **bullet points**, **numbered steps**, **tables**, or **ASCII diagrams** when helpful
-                    - Be visually pleasant and “sweet” to look at, even if technical
-
-                    ---
-
-                    ${
-                      files?.length
-                        ? `🗂️ Files have been provided. Use them as your primary reference.`
-                        : previous_messages?.trim()
-                        ? `💬 Previous conversation:\n${previous_messages}`
-                        : `❗ No prior context is available.`
-                    }
-
-                    ---
-
-                    RESPOND IN PURE CLEAN MARKDOWN TEXT FORMAT❗❗❗
-
-                    ❓ **User Question:**
-                    ${text}
-                    `;
-
-
-
-
-    // create chat if its not provided.
-    if (!chat_id) {
-      await Chats.create({
-        userId: user.id,
-      }).then((chat) => {
-        chat_id = chat.id;
-      });
-    }
-
-    let parts: any[] = [];
-    parts.push({ text: prompt });
-
-    const filesArray: { url: string } & Express.Multer.File[] =
-      [] as any;
-
-      const pdfFiles = await PDFFiles.findAll({
-        where: { chatId: chat_id, workspaceId: null },
-        attributes: ["filePath"],
-      });
+        const pdfFiles = await PDFFiles.findAll({
+          where: { chatId: chat_id, workspaceId: null },
+          attributes: ["filePath"],
+        });
   
       const imageFiles = await ImageFiles.findAll({
         where: { chatId: chat_id, workspaceId: null },
         attributes: ["filePath"],
       });
 
-    if (files !== undefined && (files.length as number) > 0) {
-      const uploadPromises = (files as Express.Multer.File[]).map(
-        async (file) => {
-          let key = `${Date.now()}_${file.originalname}`;
+      if (files !== undefined && (files.length as number) > 0) {
+        const uploadPromises = (files as Express.Multer.File[]).map(
+          async (file) => {
+            let key = `${Date.now()}_${file.originalname}`;
 
-          key = key.replace(/[^a-zA-Z0-9.]/g, "_");
-          const bucket = `chat_${chat_id}`
+            key = key.replace(/[^a-zA-Z0-9.]/g, "_");
+            const bucket = `chat_${chat_id}`
 
-          const url = `https://${process.env.R2_ENDPOINT_DOMAIN}/${bucket}/${key}`;
-          await uploadFile(bucket, bucket, key, file.buffer, file.mimetype);
-          
-          if (file.mimetype.includes("pdf")) {
-            await PDFFiles.create({
-              fileName: file.originalname,
-              chatId: chat_id,
-              userId: user.id,
-              filePath: url,
-              size: formatFileSize(file.size),
-            });
-          } else if (file.mimetype.includes("image")) {
-            await ImageFiles.create({
-              fileName: file.originalname,
-              size: formatFileSize(file.size),
-              chatId: chat_id,
-              userId: user.id,
-              filePath: url,
-            });
-          }
-
-          const newFile = {
-            ...file,
-            url,
-          } as Express.Multer.File & { url: string };
-
-          filesArray.push(newFile);
-
-          return newFile;
-        }
-      );
-
-      const processedFiles = await Promise.all(uploadPromises);
-
-      Messages.create({
-        text,
-        chatId: chat_id,
-        fromUser: true,
-        isFile: false,
-      });
-      processedFiles.forEach(async (file) => {
-        await Messages.bulkCreate(
-          [
-            {
-              text: file.originalname,
-              chatId: chat_id,
-              fromUser: true,
-              isFile: true,
+            const url = `https://${process.env.R2_ENDPOINT_DOMAIN}/${bucket}/${key}`;
+            await uploadFile(bucket, bucket, key, file.buffer, file.mimetype);
+            
+            if (file.mimetype.includes("pdf")) {
+              await PDFFiles.create({
+                fileName: file.originalname,
+                chatId: chat_id,
+                userId: user.id,
+                filePath: url,
+                size: formatFileSize(file.size),
+              });
+            } else if (file.mimetype.includes("image")) {
+              await ImageFiles.create({
+                fileName: file.originalname,
+                size: formatFileSize(file.size),
+                chatId: chat_id,
+                userId: user.id,
+                filePath: url,
+              });
             }
-          ]
+
+            const newFile = {
+              ...file,
+              url,
+            } as Express.Multer.File & { url: string };
+
+            filesArray.push(newFile);
+
+            return newFile;
+          }
         );
-      });
-    } else {
-      await Messages.create({
-        text: text,
-        chatId: chat_id,
-        fromUser: true,
-      });
-    }
 
-    parts = await processFiles(parts, pdfFiles, imageFiles);
-  
-      // add the current uploaded files
-      parts.push(
-        ...(files as Express.Multer.File[]).map((file) => ({
-          inlineData: {
-            mimeType: file.mimetype,
-            data: Buffer.from(file.buffer).toString('base64'),
+        const processedFiles = await Promise.all(uploadPromises);
+
+        Messages.create({
+          text,
+          chatId: chat_id,
+          fromUser: true,
+          isFile: false,
+        });
+        processedFiles.forEach(async (file) => {
+          await Messages.bulkCreate(
+            [
+              {
+                text: file.originalname,
+                chatId: chat_id,
+                fromUser: true,
+                isFile: true,
+              }
+            ]
+          );
+        });
+      } else {
+        await Messages.create({
+          text: text,
+          chatId: chat_id,
+          fromUser: true,
+        });
+      }
+
+      parts = await processFiles(parts, pdfFiles, imageFiles);
+    
+        // add the current uploaded files
+        parts.push(
+          ...(files as Express.Multer.File[]).map((file) => ({
+            inlineData: {
+              mimeType: file.mimetype,
+              data: Buffer.from(file.buffer).toString('base64'),
+            },
+          }))
+        );
+
+      const response = await ai.models.generateContent({
+        model: process.env.THINKING_MODEL as string,
+        contents: [
+          {
+            role: "user",
+            parts: parts,
           },
-        }))
-      );
+        ],
+      });
 
-    const response = await ai.models.generateContent({
-      model: process.env.THINKING_MODEL as string,
-      contents: [
-        {
-          role: "user",
-          parts: parts,
-        },
-      ],
-    });
+      const answer = response.text;
 
-    const answer = response.text;
+      await Messages.create({
+        text: answer,
+        chatId: chat_id,
+        fromUser: false,
+      });
 
-    await Messages.create({
-      text: answer,
-      chatId: chat_id,
-      fromUser: false,
-    });
-
-    return res.status(200).json({answer, chat_id});
+      return res.status(200).json({answer, chat_id});
     } catch (error) {
       res.status(500).json({error: 'Server error.'});
     }
@@ -1303,21 +1311,25 @@ const userActions: userActionsInterface = {
   ) => {
     const user = req.user;
 
-    if (!user) {
-      return res.status(401).json({ error: "Unauthoruized access." });
+    try {
+      if (!user) {
+        return res.status(401).json({ error: "Unauthoruized access." });
+      }
+  
+      Chats.create({
+        userId: user.id,
+      }).then((chat) => {
+        const plainChat = chat.get({ plain: true });
+  
+        delete plainChat.userId;
+        delete plainChat.createdAt;
+        delete plainChat.updatedAt;
+  
+        return res.status(201).json({ success: true, chat: plainChat });
+      });
+    } catch (error) {
+      return res.status(500).json({error: 'Server error.'});
     }
-
-    Chats.create({
-      userId: user.id,
-    }).then((chat) => {
-      const plainChat = chat.get({ plain: true });
-
-      delete plainChat.userId;
-      delete plainChat.createdAt;
-      delete plainChat.updatedAt;
-
-      return res.status(201).json({ success: true, chat: plainChat });
-    });
   },
 
   getChat: async (
