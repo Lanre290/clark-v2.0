@@ -56,18 +56,18 @@ const userActions: userActionsInterface = {
         name: name,
         userId: user.id,
       })
-        .then((workspace) => {
+        .then(async(workspace) => {
           const hashedWorkspaceId = uuidv5(
             workspace.id.toString(),
             process.env.UUID_SECRET as string
           );
 
-          Chats.create({
+          const chat = await Chats.create({
             userId: user.id,
-            workspaceId: workspace.id,
+            workspaceId: hashedWorkspaceId,
           });
 
-          Workspace.update(
+          await Workspace.update(
             { enc_id: hashedWorkspaceId },
             { where: { id: workspace.id } }
           );
@@ -77,6 +77,7 @@ const userActions: userActionsInterface = {
             message: "Workspace created successfully.",
             workspace_id: hashedWorkspaceId,
             name: workspace.name,
+            chat
           });
         })
         .catch((error) => {
@@ -100,6 +101,7 @@ const userActions: userActionsInterface = {
     let pdfFiles: PDFFiles[] | null = [];
     let imageFiles: ImageFiles[] | null = [];
     let youtubeVideos: YouTubeVideo[] | null = [];
+    const userOriginalQuestion = question;
 
     const user = req.user;
 
@@ -245,6 +247,26 @@ const userActions: userActionsInterface = {
       });
       const aiResponse = response.text;
 
+      await Chats.findOne({where: {workspaceId: workspace_id}})
+            .then(async (chat) => {
+              await Messages.bulkCreate(
+                [
+                  {
+                    text: userOriginalQuestion,
+                    chatId: chat?.id,
+                    fromUser: true,
+                    isFile: false,
+                  },
+                  {
+                    text: aiResponse,
+                    chatId: chat?.id,
+                    fromUser: false,
+                    isFile: false,
+                  }
+                ]
+              );
+            })
+
       res.setHeader("Content-Type", "text/plain");
       return res.send(aiResponse);
     }
@@ -261,7 +283,7 @@ const userActions: userActionsInterface = {
 
     try {
       // const prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least 5,000–10,000 words if necessary), educational, and rich in content.
-      //                       The document should:
+      //                       aThe document should:
       //                       Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
       //                       Provide precise definitions of all key terms and concepts, with contextual explanations.
       //                       Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
@@ -274,6 +296,7 @@ const userActions: userActionsInterface = {
       //                       The tone should be engaging, clear, and student-friendly, assuming no prior expertise in the subject.
       //                       Use proper formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability.
       //                       Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.`;
+      
       const prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
         word_range ? word_range : "5,000–10,000"
       } words if necessary), educational, and rich in content.
@@ -1212,15 +1235,15 @@ const userActions: userActionsInterface = {
 
       const processedFiles = await Promise.all(uploadPromises);
 
+      Messages.create({
+        text,
+        chatId: chat_id,
+        fromUser: true,
+        isFile: false,
+      });
       processedFiles.forEach(async (file) => {
         await Messages.bulkCreate(
           [
-            {
-              text,
-              chatId: chat_id,
-              fromUser: true,
-              isFile: false,
-            },
             {
               text: file.originalname,
               chatId: chat_id,
