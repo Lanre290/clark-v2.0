@@ -96,11 +96,12 @@ const waitlistActions: waitListInterface = {
       if(!token){
         return res.status(401).json({error: 'Unauthorized access.'});
       }
+      let emails: string[] = [];
 
       if(token !== process.env.ADMIN_TOKEN){
         return res.status(401).json({error: 'Unauthorized access.'});
       }
-      
+
       const waitlistUsers = await UserWaitlist.findAll({
         attributes: ['email', 'name'],
       });
@@ -111,7 +112,12 @@ const waitlistActions: waitListInterface = {
   
       for (const user of waitlistUsers) {
         try {
+          if(emails.includes(user.email)){
+            console.warn(`Email already sent to ${user.email}, skipping...`);
+            continue;
+          }
           await sendWaitlistForm1(user.email, user.name);
+          emails.push(user.email);
         } catch (err: any) {
           console.warn(`Failed to send email to ${user.email}:`, err.message);
         }
