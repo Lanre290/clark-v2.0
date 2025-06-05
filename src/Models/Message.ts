@@ -36,6 +36,11 @@ Messages.init(
             allowNull: false,
             defaultValue: false
         },
+        filePath: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: null
+        }
     },
     {
         sequelize: sequelize as Sequelize,

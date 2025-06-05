@@ -1257,6 +1257,7 @@ const userActions: userActionsInterface = {
                 chatId: chat_id,
                 fromUser: true,
                 isFile: true,
+                filePath: file.url
               }
             ]
           );
