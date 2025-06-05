@@ -64,6 +64,7 @@ app.post("/api/v1/resetPassword", AuthController.resetPassword);
 app.get("/api/v1/waitlist/:email?", waitlistActions.getUser);
 app.post("/api/v1/waitlist", waitlistActions.addUser);
 app.delete("/api/v1/waitlist", waitlistActions.deleteUser);
+app.post("/api/v1/waitlist/mail", waitlistActions.sendWaitlistMail);
 
 
 app.post("/api/v1/askQuestion", middleware.verifyToken, userActions.askQuestion);

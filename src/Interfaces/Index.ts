@@ -48,6 +48,12 @@ export interface AuthControllerInterface {
   sendForgotPasswordEmail: AuthActionFn;
   resetPassword: AuthActionFn;
 }
+export interface waitListInterface {
+  addUser: AuthActionFn;
+  getUser: AuthActionFn;
+  deleteUser: AuthActionFn;
+  sendWaitlistMail: AuthActionFn;
+}
 
 export interface afterVerificationMiddlerwareInterface {
   user: {
