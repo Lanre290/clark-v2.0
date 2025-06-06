@@ -84,6 +84,7 @@ app.get("/api/v1/facts", middleware.verifyToken, userActions.generateRandomFact)
 app.post("/api/v1/suggestQuestion",middleware.verifyToken, userActions.suggestQuestion);
 app.get("/api/v1/quiz/:quiz_id?", middleware.verifyToken, userActions.getQuiz);
 app.get("/api/v1/files/:file_id?", middleware.verifyToken, userActions.getFile);
+app.get("/api/v1/randomQuestion", middleware.verifyToken, userActions.generateRandomQuestion);
 
 app.post("/api/v1/ai_chat", middleware.verifyToken, userActions.sendChat);
 app.post("/api/v1/chats", middleware.verifyToken, userActions.createChat);

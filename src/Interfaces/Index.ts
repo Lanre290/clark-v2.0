@@ -37,6 +37,7 @@ export interface userActionsInterface {
   sendChat: UserActionFn;
   createChat: UserActionFn;
   getChat: UserActionFn;
+  generateRandomQuestion: UserActionFn;
 }
 
 export interface AuthControllerInterface {
