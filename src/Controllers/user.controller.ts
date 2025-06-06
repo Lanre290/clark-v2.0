@@ -1353,6 +1353,13 @@ const userActions: userActionsInterface = {
     const offset = (page as number - 1) * limit;
   
     try {
+      const chat = await Chats.findOne({where:{id: chat_id}, attributes: {exclude: ['createdAt', 'updatedAt', 'userId']}});
+
+      if(!chat){
+        return res.status(404).json({error: 'Chat not found'})
+      }
+
+
       const messages = await Messages.findAll({
         where: { chatId: chat_id },
         order: [['createdAt', 'DESC']],
@@ -1362,7 +1369,7 @@ const userActions: userActionsInterface = {
       });
   
       messages.reverse();
-      return res.status(200).json({ page, messages });
+      return res.status(200).json({ page, messages, chat });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Internal server error." });
