@@ -1360,6 +1360,10 @@ const userActions: userActionsInterface = {
           return res.status(404).json({error: 'Chat not found'})
         }
 
+        if(chat.userId !== user.id){
+          return res.status(403).json({error: 'Forbidden access to this chat.'});
+        }
+
         const messages = await Messages.findAll({
           where: { chatId: chat_id },
           order: [['createdAt', 'DESC']],
