@@ -1314,7 +1314,7 @@ const userActions: userActionsInterface = {
 
     try {
       if (!user) {
-        return res.status(401).json({ error: "Unauthoruized access." });
+        return res.status(401).json({ error: "Unauthorized access." });
       }
   
       Chats.create({
@@ -1345,31 +1345,32 @@ const userActions: userActionsInterface = {
       return res.status(401).json({ error: "Unauthorized access." });
     }
   
-    if (!chat_id) {
-      return res.status(400).json({ error: "chat_id is required." });
-    }
-  
-    const limit = 20;
-    const offset = (page as number - 1) * limit;
-  
     try {
-      const chat = await Chats.findOne({where:{id: chat_id}, attributes: {exclude: ['createdAt', 'updatedAt', 'userId']}});
-
-      if(!chat){
-        return res.status(404).json({error: 'Chat not found'})
+      if(!chat_id){
+        const chats = await Chats.findAll({where: { userId: user.id, workspaceId: null}, attributes: {exclude: ['userId']}});
+        return res.status(200).json({chats});
       }
+      else{
+        const limit = 20;
+        const offset = (page as number - 1) * limit;
 
+        const chat = await Chats.findOne({where:{ id: chat_id }, attributes: {exclude: ['createdAt', 'updatedAt', 'userId']}});
 
-      const messages = await Messages.findAll({
-        where: { chatId: chat_id },
-        order: [['createdAt', 'DESC']],
-        limit,
-        offset,
-        attributes: {exclude: ['id', 'chatId']}
-      });
-  
-      messages.reverse();
-      return res.status(200).json({ page, messages, chat });
+        if(!chat){
+          return res.status(404).json({error: 'Chat not found'})
+        }
+
+        const messages = await Messages.findAll({
+          where: { chatId: chat_id },
+          order: [['createdAt', 'DESC']],
+          limit,
+          offset,
+          attributes: {exclude: ['id', 'chatId']}
+        });
+    
+        messages.reverse();
+        return res.status(200).json({ page, messages, chat });
+      }
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Internal server error." });
