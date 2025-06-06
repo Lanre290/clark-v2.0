@@ -40,7 +40,12 @@ Messages.init(
             type: DataTypes.STRING,
             allowNull: true,
             defaultValue: null
-        }
+        },
+        size: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: null
+        },
     },
     {
         sequelize: sequelize as Sequelize,
