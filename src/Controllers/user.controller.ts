@@ -1355,14 +1355,14 @@ const userActions: userActionsInterface = {
         const limit = 20;
         const offset = (page as number - 1) * limit;
 
-        const chat = await Chats.findOne({where:{ id: chat_id }, attributes: {exclude: ['createdAt', 'updatedAt', 'userId']}});
+        const chat = await Chats.findOne({where:{ id: chat_id }, attributes: {exclude: ['createdAt', 'updatedAt']}});
 
         if(!chat){
-          return res.status(404).json({error: 'Chat not found'})
+          return res.status(404).json({error: 'Chat not found'});
         }
 
         if(chat.userId !== user.id){
-          return res.status(403).json({error: 'Forbidden access to this chat.'});
+          return res.status(404).json({error: 'Chat not found.', message: 'Forbidden access.'});
         }
 
         const messages = await Messages.findAll({
@@ -1374,6 +1374,7 @@ const userActions: userActionsInterface = {
         });
     
         messages.reverse();
+        delete chat.dataValues.userId;
         return res.status(200).json({ page, messages, chat });
       }
     } catch (error) {
