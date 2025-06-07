@@ -18,6 +18,11 @@ class User extends Model {
   public updatedAt!: Date;
 }
 
+enum PlanType {
+  Free = 'Free',
+  Paid = 'Paid'
+}
+
 User.init(
   {
     id: {
@@ -78,10 +83,10 @@ User.init(
       defaultValue: "",
     },
     plan: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM(...Object.values(PlanType)),
       allowNull: false,
-      defaultValue: "free",
-    },
+      defaultValue: PlanType.Free
+    }
   },
   {
     sequelize: sequelize as Sequelize,
