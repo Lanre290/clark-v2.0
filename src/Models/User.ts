@@ -77,6 +77,11 @@ User.init(
       allowNull: false,
       defaultValue: "",
     },
+    plan: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "free",
+    },
   },
   {
     sequelize: sequelize as Sequelize,
