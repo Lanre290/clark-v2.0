@@ -144,7 +144,7 @@ const AuthController: AuthControllerInterface = {
             }
 
             const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
-            if (!isUserVerified) {
+            if (!isUserVerified && (!oauth || !oauth_method || !oauth_token)) {
                 return res.status(400).json({ error: "User email not verified." });
             }
 

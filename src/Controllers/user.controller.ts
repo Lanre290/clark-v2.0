@@ -114,7 +114,7 @@ const userActions: userActionsInterface = {
     }
 
     if (!thinking) {
-      thinking = false;
+      thinking = true;
     }
 
     try {

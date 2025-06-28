@@ -86,7 +86,7 @@ User.init(
       type: DataTypes.ENUM(...Object.values(PlanType)),
       allowNull: false,
       defaultValue: PlanType.Free
-    }
+    },
   },
   {
     sequelize: sequelize as Sequelize,
