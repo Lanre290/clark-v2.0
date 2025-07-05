@@ -14,14 +14,11 @@ class User extends Model {
   public study_vibe!: string;
   public image_url!: string;
   public oauth!: string;
+  public plan!: string;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
 
-enum PlanType {
-  Free = 'Free',
-  Paid = 'Paid'
-}
 
 User.init(
   {
@@ -83,9 +80,9 @@ User.init(
       defaultValue: "",
     },
     plan: {
-      type: DataTypes.ENUM(...Object.values(PlanType)),
+      type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: PlanType.Free
+      defaultValue: 'Free',
     },
   },
   {
