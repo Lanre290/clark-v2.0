@@ -272,8 +272,8 @@ const userActions: userActionsInterface = {
                 );
               })
   
-        res.setHeader("Content-Type", "text/plain");
-        return res.send(aiResponse);
+        
+        return res.status(200).json({answer: aiResponse});
       }
   
       analyzeDocumentsAndImages();

@@ -24,7 +24,6 @@ class User extends Model {
   public updatedAt!: Date;
 }
 
-
 User.init(
   {
     id: {
