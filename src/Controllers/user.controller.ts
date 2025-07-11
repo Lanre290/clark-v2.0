@@ -1884,7 +1884,7 @@ const userActions: userActionsInterface = {
         return res.status(200).json({chats});
       }
       else{
-        const limit = 20;
+        const limit = 60;
         const offset = (page as number - 1) * limit;
 
         const chat = await Chats.findOne({where:{ id: chat_id }, attributes: {exclude: ['createdAt', 'updatedAt']}});
