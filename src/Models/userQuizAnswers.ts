@@ -8,6 +8,7 @@ class userAnswers extends Model {
   public quizId!: string;
   public userScore!: string;
   public totalQuestions!: string;
+  public timeTaken!: number | null; // Nullable if not provided
   public userAnswers!: any;
   public percentage!: string;
   public readonly createdAt!: Date;
@@ -40,6 +41,10 @@ userAnswers.init(
     totalQuestions: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    timeTaken: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     userAnswers: {
       type: DataTypes.JSON,

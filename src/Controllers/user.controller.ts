@@ -455,6 +455,9 @@ const userActions: userActionsInterface = {
     const user = req.user;
     let imageFiles: ImageFiles[] | null = [];
     let pdfFiles: PDFFiles[] | null = [];
+    let quizSourceType = "workspace";
+    let quizSource = '';
+    let quizfileId = '';
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized access." });
@@ -470,6 +473,17 @@ const userActions: userActionsInterface = {
 
     try {
       if(mode == 'workspace' && workspace_id){
+        const workspaceExists = await Workspace.findOne({
+          where: { enc_id: workspace_id, userId: user.id },
+          attributes: ["id"],
+        });
+
+        if (!workspaceExists) {
+          return res.status(404).json({ error: "Workspace not found." });
+        }
+
+        quizSource = workspaceExists.name || 'Workspace';
+
         pdfFiles = await PDFFiles.findAll({
           where: { workspaceId: workspace_id },
           attributes: ["filePath"],
@@ -483,13 +497,28 @@ const userActions: userActionsInterface = {
       else{
         pdfFiles = await PDFFiles.findAll({
           where: { id: file_id },
-          attributes: ["filePath"],
+          attributes: ["filePath", "fileName", "id"],
         });
+
+        if(pdfFiles && pdfFiles.length != 0) {
+          console.log(pdfFiles, pdfFiles[0].fileName, pdfFiles[0].id);
+          quizSource = pdfFiles[0].fileName || 'File';
+          quizfileId = pdfFiles[0].id;
+        }
 
         imageFiles = await ImageFiles.findAll({
           where: { id: file_id },
-          attributes: ["filePath"],
+          attributes: ["filePath", "fileName", "id"],
         });
+
+        if(imageFiles && imageFiles.length != 0) {
+          console.log(imageFiles, imageFiles[0].fileName, imageFiles[0].id);
+          quizSource = imageFiles[0].fileName || 'File';
+          quizfileId = imageFiles[0].id;
+        }
+
+        quizSourceType = "file";
+
       }
 
       const prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
@@ -563,6 +592,9 @@ const userActions: userActionsInterface = {
         creator: user.name,
         userId: user.id,
         workspaceId: workspace_id,
+        fileId: quizfileId,
+        quizSource: quizSource,
+        quizSourceType: quizSourceType,
         duration: duration,
       })
         .then(async (quiz) => {
@@ -615,7 +647,7 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { quiz_id, answers, name, email} = req.body;
+    const { quiz_id, answers, name, email, timeTaken} = req.body;
 
     if (!quiz_id || !answers || !Array.isArray(answers)) {
       return res.status(400).json({ error: "Bad request." });
@@ -661,8 +693,9 @@ const userActions: userActionsInterface = {
         quizId: quiz_id,
         userScore: score.toString(),
         totalQuestions: totalQuestions.toString(),
-        userAnswers: JSON.stringify(results),
-        percentage: ((score / totalQuestions) * 100).toFixed(2) + "%",
+        timeTaken: timeTaken || 0,
+        userAnswers: JSON.stringify(answers),
+        percentage: ((score / totalQuestions) * 100).toFixed(2),
       });
 
       return res.status(200).json({
@@ -671,7 +704,7 @@ const userActions: userActionsInterface = {
         score,
         quiz_id,
         totalQuestions,
-        percentage: ((score / totalQuestions) * 100).toFixed(2) + "%",
+        percentage: ((score / totalQuestions) * 100).toFixed(2),
         results,
 
       });
@@ -716,12 +749,61 @@ const userActions: userActionsInterface = {
           leaderboard.reduce((sum, entry) => sum + parseFloat(entry.userScore), 0) /
           leaderboard.length
         ).toFixed(2),
+        averagePercentage: (
+          leaderboard.reduce((sum, entry) => sum + parseFloat(entry.percentage), 0) /
+          leaderboard.length
+        ).toFixed(2),
+        averageTimeTaken: (
+          leaderboard.reduce((sum, entry) => sum + (entry.timeTaken || 0), 0) /
+          leaderboard.length
+        ).toFixed(2),
         leaderboard,
       });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
     }
+  },
+
+  fetchUserQuizScore: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const user = req.user;
+    const { quiz_id } = req.params;
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    if (!quiz_id) {
+      return res.status(400).json({ error: "Bad request." });
+    }
+
+    try {
+      const userScore = await userAnswers.findOne({
+        where: { quizId: quiz_id as string, userEmail: user.email },
+        attributes: {"exclude": ['id', 'createdAt', 'updatedAt']},
+      });
+
+      const quiz = await Quiz.findOne({
+        where: { id: quiz_id as string },
+      });
+
+      if (!userScore) {
+        return res.status(404).json({ error: "User score not found." });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "User score retrieved successfully.",
+        userScore,
+        quiz
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+
   },
 
   deleteEntryFromQuiz: async (
@@ -1015,6 +1097,42 @@ const userActions: userActionsInterface = {
     }
   },
 
+  deleteFlashCard: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { flashcard_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    try {
+      if (!flashcard_id) {
+        return res.status(400).json({ error: "Bad request." });
+      }
+
+      const flashcard = await FlashCard.findOne({
+        where: { id: flashcard_id, userId: user.id },
+      });
+
+      if (!flashcard) {
+        return res.status(404).json({ error: "Flashcard not found." });
+      }
+
+      await FlashCard.destroy({ where: { id: flashcard_id, userId: user.id } });
+
+      return res.status(200).json({
+        success: true,
+        message: "Flashcard deleted successfully.",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
   getWorkspace: async (
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
@@ -1067,6 +1185,10 @@ const userActions: userActionsInterface = {
           return res.status(404).json({ error: "Workspace not found." });
         }
 
+        const workspaceChat = await Chats.findOne({
+          where: { workspaceId: id },
+        });
+
         const files = {
           imageFiles,
           pdfFiles,
@@ -1082,6 +1204,7 @@ const userActions: userActionsInterface = {
           success: true,
           message: "Workspace retrieved successfully.",
           workspace,
+          chat: workspaceChat ? workspaceChat : null,
         });
       }
     } catch (error) {
@@ -1372,6 +1495,43 @@ const userActions: userActionsInterface = {
           questions,
         });
       }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
+  deleteQuiz: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { quiz_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    try {
+      if (!quiz_id) {
+        return res.status(400).json({ error: "Bad request." });
+      }
+
+      const quiz = await Quiz.findOne({
+        where: { id: quiz_id, userId: user.id },
+      });
+
+      if (!quiz) {
+        return res.status(404).json({ error: "Quiz not found." });
+      }
+
+      await Question.destroy({ where: { quizId: quiz.id } });
+      await Quiz.destroy({ where: { id: quiz_id, userId: user.id } });
+
+      return res.status(200).json({
+        success: true,
+        message: "Quiz deleted successfully.",
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
@@ -1791,6 +1951,86 @@ const userActions: userActionsInterface = {
     }
   },
   
+  deleteChat: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { chat_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    try {
+      if (!chat_id) {
+        return res.status(400).json({ error: "Bad request." });
+      }
+
+      const chat = await Chats.findOne({
+        where: { id: chat_id, userId: user.id },
+      });
+
+      if (!chat) {
+        return res.status(404).json({ error: "Chat not found." });
+      }
+
+      if(chat.workspaceId !== null){
+        return res.status(401).json({ error: "unAuthorized access.", message: "Cannot delete workspace chat." });
+      }
+
+      await Messages.destroy({ where: { chatId: chat_id } });
+      await Chats.destroy({ where: { id: chat_id, userId: user.id } });
+
+      return res.status(200).json({
+        success: true,
+        message: "Chat deleted successfully.",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
+
+  deleteWorkspace: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    const { id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    try {
+      if (!id) {
+        return res.status(400).json({ error: "Bad request." });
+      }
+
+      const workspace = await Workspace.findOne({
+        where: { enc_id: id, userId: user.id },
+      });
+
+      if (!workspace) {
+        return res.status(404).json({ error: "Workspace not found." });
+      }
+
+      await PDFFiles.destroy({ where: { workspaceId: workspace.id } });
+      await ImageFiles.destroy({ where: { workspaceId: workspace.id } });
+      await YouTubeVideo.destroy({ where: { workspaceId: workspace.id } });
+      await Chats.destroy({ where: { workspaceId: id } });
+      await Workspace.destroy({ where: { enc_id: id, userId: user.id } });
+
+      return res.status(200).json({
+        success: true,
+        message: "Workspace deleted successfully.",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  }
   
 };
 

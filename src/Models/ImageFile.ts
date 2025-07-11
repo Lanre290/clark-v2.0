@@ -3,11 +3,15 @@ import sequelize from "../config/Sequelize";
 
 class ImageFiles extends Model {
   public id!: string;
+  public fileName!: string;
   public workspaceId!: string;
+  public chatId!: string | null;
   public userId!: string;
   public filePath!: string;
-  public createdAt!: Date;
-  public updatedAt!: Date;
+  public summary!: string | null;
+  public size!: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 ImageFiles.init(

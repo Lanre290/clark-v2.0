@@ -91,7 +91,12 @@ app.get("/api/v1/randomQuestion", middleware.verifyToken, userActions.generateRa
 app.post("/api/v1/assessAnswers", userActions.assessUserAnswers);
 app.get("/api/v1/leaderboard/:quiz_id?", middleware.verifyToken, userActions.fetchQuizLeaderBoard);
 app.get("/api/v1/userProgress/:id", middleware.verifyToken, userActions.getUserProgress);
-app.delete("/api/v1/quiz", middleware.verifyToken, userActions.deleteEntryFromQuiz);
+app.delete("/api/v1/userAnswer", middleware.verifyToken, userActions.deleteEntryFromQuiz);
+app.delete("/api/v1/quiz/:quiz_id", middleware.verifyToken, userActions.deleteQuiz);
+app.delete("/api/v1/flashcard/:flashcard_id", middleware.verifyToken, userActions.deleteFlashCard);
+app.delete("/api/v1/chat/:chat_id", middleware.verifyToken, userActions.deleteChat);
+app.delete("/api/v1/workspace/:id", middleware.verifyToken, userActions.deleteWorkspace);
+app.get("/api/v1/quizScore/:quiz_id", middleware.verifyToken, userActions.fetchUserQuizScore);
 
 app.post("/api/v1/ai_chat", middleware.verifyToken, userActions.sendChat);
 app.post("/api/v1/chats", middleware.verifyToken, userActions.createChat);

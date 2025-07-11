@@ -12,7 +12,6 @@ const NodeCache = require("node-cache");
 const otpCache = new NodeCache({ stdTTL: 0, checkperiod: 120 });
 import crypto from "crypto";
 import ForgotPassword from "../Models/forgotPassword";
-import { userSchema } from "../utils/zod.utils";
 
 
 const AuthController: AuthControllerInterface = {
@@ -73,13 +72,107 @@ const AuthController: AuthControllerInterface = {
         }
     },
 
+    // signup: async (req: Request, res: Response) => {
+    //     const requestBody = req.body;
+    //     let { name, email, nickname, password, oauth, oauth_method } = requestBody;
+    //     const user_image = req.file;
+    //     let key = '';
+
+    //     const requiredKeys = ['name', 'email', 'nickname', 'password'];
+
+    //     const missingKey = requiredKeys.find(key => !(key in requestBody));
+
+    //     if(missingKey){
+    //         return res.status(400).json({error: 'Bad request.', message: `${missingKey} is required.`});
+    //     }
+
+    //     try {
+    //         if(oauth && oauth_method) {
+    //             password = '';
+    //         }
+    //         else{
+    //             if (!password) {
+    //                 return res.status(400).json({ error: "Bad request." });
+    //             }
+    //         }
+
+    //         const existingUser = await User.findOne({ where: { email }, attributes: { exclude: ['createdAt', 'updatedAt'] } });
+    //         if (existingUser) {
+    //             return res.status(409).json({ error: "User already exists." });
+    //         }
+
+    //         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    //         const stringRegex = /^[a-zA-Z0-9\s]+$/;
+    //         if (!emailRegex.test(email)) {
+    //             return res.status(400).json({ error: "Invalid email format." });
+    //         }
+
+    //         if (!stringRegex.test(name)) {
+    //             return res.status(400).json({ error: "Name can only contain alphanumeric characters." });
+    //         }
+            
+    //         const hashedPassword = await bcrypt.hash(password, 10);
+
+    //         if (user_image && user_image.size > 5 * 1024 * 1024) {
+    //             return res.status(400).json({ error: "File size exceeds 5MB." });
+    //         }
+
+    //         const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
+    //         if (!isUserVerified && (!oauth || !oauth_method)) {
+    //             return res.status(400).json({ error: "User email not verified." });
+    //         }
+
+
+    //         if(user_image){
+    //             const bucket = 'clarkuser'
+    //             key = `${Date.now()}_${user_image.originalname}`;
+    //             const mimeType = user_image.mimetype;
+                
+    //             key = key.replace(/[^a-zA-Z0-9.]/g, "_");
+
+    //             await uploadUserPicture(bucket, key, user_image.buffer, mimeType);
+    //         }
+
+    //         const user = {
+    //             name,
+    //             email,
+    //             nickname,
+    //             password: hashedPassword,
+    //             image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
+    //         }
+
+    //         await User.create({
+    //             ...user,
+    //         }).then((user) => {
+    //             delete user.dataValues.password;
+    //             delete user.dataValues.createdAt;
+    //             delete user.dataValues.updatedAt;
+    //             const token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
+    //                 expiresIn: "90d",
+    //             });
+
+    //             return res.status(200).json({
+    //                 success: true,
+    //                 message: "Signup successful.",
+    //                 user: user,
+    //                 token: token,
+    //             });
+    //         });
+    //     } catch (error) {
+    //         console.error(error);
+    //         return res.status(500).json({ error: "Server error." });
+    //     }
+    // },
+
     signup: async (req: Request, res: Response) => {
         const requestBody = req.body;
-        let { name, email, nickname, password, oauth, oauth_method } = requestBody;
+        let { name, email, nickname, password, role, school, department, interests, study_vibe, oauth, oauth_method, oauth_token } = requestBody;
+        // let { name, email, nickname, password, oauth, oauth_method } = requestBody;
         const user_image = req.file;
         let key = '';
+        const requiredKeys = ['name', 'email', 'nickname', 'password', 'role', 'school', 'department', 'interests', 'study_vibe'];
 
-        const requiredKeys = ['name', 'email', 'nickname', 'password'];
+        // const requiredKeys = ['name', 'email', 'nickname', 'password'];
 
         const missingKey = requiredKeys.find(key => !(key in requestBody));
 
@@ -88,8 +181,21 @@ const AuthController: AuthControllerInterface = {
         }
 
         try {
-            if(oauth && oauth_method) {
+            if(oauth && oauth_method && oauth_token) {
                 password = '';
+
+                if(oauth_method === 'google') {
+                    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+                    try {
+                        await client.verifyIdToken({
+                            idToken: oauth_token,
+                            audience: process.env.GOOGLE_CLIENT_ID,
+                        });
+                    } catch (error) {
+                        return res.status(400).json({ error: "Invalid Google token." });
+                    }
+                }
             }
             else{
                 if (!password) {
@@ -119,7 +225,7 @@ const AuthController: AuthControllerInterface = {
             }
 
             const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
-            if (!isUserVerified && (!oauth || !oauth_method)) {
+            if (!isUserVerified && (!oauth || !oauth_method || !oauth_token)) {
                 return res.status(400).json({ error: "User email not verified." });
             }
 
@@ -138,8 +244,13 @@ const AuthController: AuthControllerInterface = {
                 name,
                 email,
                 nickname,
+                role,
+                school,
                 password: hashedPassword,
+                department,
+                interests,
                 image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
+                study_vibe
             }
 
             await User.create({

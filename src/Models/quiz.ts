@@ -36,6 +36,21 @@ Quiz.init(
       allowNull: true,
       defaultValue: null,
     },
+    fileId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    quizSource: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    quizSourceType: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
     duration: {
       type: DataTypes.INTEGER,
       allowNull: false,

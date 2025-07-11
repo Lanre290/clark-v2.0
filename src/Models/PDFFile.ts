@@ -3,9 +3,13 @@ import sequelize from "../config/Sequelize";
 
 class PDFFiles extends Model {
   public id!: string;
-  public workspaceId!: string;
+  public fileName!: string;
+  public workspaceId!: string | null;
+  public chatId!: string | null;
   public userId!: string;
   public filePath!: string;
+  public summary!: string | null;
+  public size!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }

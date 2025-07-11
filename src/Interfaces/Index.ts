@@ -43,6 +43,11 @@ export interface userActionsInterface {
   getFlashCard: UserActionFn;
   getUserProgress: UserActionFn;
   deleteEntryFromQuiz: UserActionFn;
+  deleteQuiz: UserActionFn;
+  deleteFlashCard: UserActionFn;
+  deleteChat: UserActionFn; 
+  deleteWorkspace: UserActionFn;
+  fetchUserQuizScore: UserActionFn;
 }
 
 export interface AuthControllerInterface {

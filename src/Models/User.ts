@@ -15,6 +15,11 @@ class User extends Model {
   public image_url!: string;
   public oauth!: string;
   public plan!: string;
+  public subscriptionstatus!: string;
+  public paystackcustomercode!: string | null;
+  public paystackauthorizationcode!: string | null;
+  public nextbillingdate!: Date | null;
+  public streakCount!: number;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -83,6 +88,28 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'Free',
+    },
+    subscriptionstatus: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "None", // or another default enum-like value
+    },
+    paystackcustomercode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    paystackauthorizationcode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    nextbillingdate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    streakCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
   },
   {
