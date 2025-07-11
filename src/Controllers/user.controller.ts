@@ -101,7 +101,7 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    let { question, workspace_id, thinking, mode, file_id } = req.body;
+    let { question, workspace_id, thinking, mode, file_id, previous_messages } = req.body;
     let pdfFiles: PDFFiles[] | null = [];
     let imageFiles: ImageFiles[] | null = [];
     let youtubeVideos: YouTubeVideo[] | null = [];
@@ -191,7 +191,17 @@ const userActions: userActionsInterface = {
                   Your response must be:
                   - Very detailed and accurate
                   - Clear and easy to understand
-                  - Well-structured: use section headings, subheadings, bullet points, code blocks (if needed), and appropriate spacing for high readability.`;
+                  - Well-structured: use section headings, subheadings, bullet points, code blocks (if needed), and appropriate spacing for high readability.
+                  
+                  ${
+                    previous_messages?.trim()
+                          ? `💬 Previous conversation:\n${previous_messages}
+                          ❗❗❗❗❗NB: YOU MUST REPLY LIKE A NORMAL CHATBOT WOULD, DO NOT HINT AT HOW YOU WERE SUPPLIED THE PREVIOUS MESSAGES BETWEEN YOU AND THE USER, USE IT FOR CONTEXT.
+                          `
+                          : `❗ No prior context is available.`
+                  }
+                  `
+                  ;
       } else if (mode == "file") {
         pdfFiles = await PDFFiles.findAll({ where: { id: file_id } });
         imageFiles = await ImageFiles.findAll({ where: { id: file_id } });
@@ -217,11 +227,20 @@ const userActions: userActionsInterface = {
                     }
   
                     If the answer cannot be found in the provided documents, images, or conversation history, clearly state that the information is not available.
-  
+                    
                     Your answer must be:
                     - Accurate and based solely on the provided context
                     - Clear, well-explained, and easy to understand
-                    - Structured with headings, subheadings, bullet points, and code blocks where appropriate for readability.`;
+                    - Structured with headings, subheadings, bullet points, and code blocks where appropriate for readability.
+                    
+                    ${
+                      previous_messages?.trim()
+                          ? `💬 Previous conversation:\n${previous_messages}
+                          ❗❗❗❗❗NB: YOU MUST REPLY LIKE A NORMAL CHATBOT WOULD, DO NOT HINT AT HOW YOU WERE SUPPLIED THE PREVIOUS MESSAGES BETWEEN YOU AND THE USER, USE IT FOR CONTEXT.
+                          `
+                          : `❗ No prior context is available.`
+                    }
+                    `;
       }
   
       async function analyzeDocumentsAndImages() {
@@ -894,7 +913,7 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { workspace_id, size, mode, file_id } = req.body;
+    const { workspace_id, size, mode, file_id, is_context, context } = req.body;
     const user = req.user;
     let pdfFiles: PDFFiles[] | null = [];
     let imageFiles: ImageFiles[] | null = [];
@@ -939,7 +958,21 @@ const userActions: userActionsInterface = {
         });
       }
 
-      const prompt = `Generate a ${size} of flashcard based on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
+      // Support sophisticated user prompts, e.g. "@flashcard generate something on photosynthesis in this pdf"
+      let prompt = "";
+      if (is_context && context && context.trim().length > 0) {
+        prompt = `You are an expert flashcard generator for students. The user has provided a specific instruction or topic: "${context}". 
+          Carefully analyze the provided documents and images, and generate exactly 6 flashcards that directly address or are highly relevant to the user's request.
+          For each flashcard, provide:
+          - A clear, concise question (front)
+          - A correct answer (back)
+          Flashcard number must be exactly 6.
+          `;
+      } else {
+        prompt = `Generate ${size} flashcards based on the provided documents and images. 
+          Go through all materials extensively to ensure coverage of all key topics.
+          For each flashcard, provide a question, answer, and a detailed explanation with references to the source(s) used.`;
+      }
       let parts: any[] = [];
 
       parts.push({ text: prompt });
@@ -973,15 +1006,11 @@ const userActions: userActionsInterface = {
                   description:
                     "The answer or explanation on the other side of the flashcard.",
                   nullable: false,
-                },
-                explanation: {
-                  type: Type.STRING,
-                  description:
-                    "Detailed explanation of the answerfrom the document(s), including references to documents or images used.",
-                  nullable: false,
                 }
               },
               required: ["question", "answer"],
+              minItems: "6",
+              minimum: 6
             },
           },
         },
