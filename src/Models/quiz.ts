@@ -33,8 +33,7 @@ Quiz.init(
     },
     workspaceId: {
       type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: null,
+      allowNull: false,
     },
     duration: {
       type: DataTypes.INTEGER,

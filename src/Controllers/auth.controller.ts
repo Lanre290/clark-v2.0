@@ -17,14 +17,27 @@ import { userSchema } from "../utils/zod.utils";
 
 const AuthController: AuthControllerInterface = {
     login: async (req: Request, res: Response) => {
-        let { email, password, oauth, oauth_method } = req.body;
+        let { email, password, oauth, oauth_method, oauth_token } = req.body;
         if (!email) {
             return res.status(400).json({ error: "Bad request." });
         }
 
         try {
-            if(oauth && oauth_method) {
+            if(oauth && oauth_method && oauth_token) {
                 password = '';
+
+                if(oauth_method === 'google') {
+                    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+                    try {
+                        await client.verifyIdToken({
+                            idToken: oauth_token,
+                            audience: process.env.GOOGLE_CLIENT_ID,
+                        });
+                    } catch (error) {
+                        return res.status(400).json({ error: "Invalid Google token." });
+                    }
+                }
             }
             else{
                 if (!password) {
@@ -47,12 +60,12 @@ const AuthController: AuthControllerInterface = {
             }
 
             if(user.dataValues.oauth != ''){
-                return res.status(401).json({ error: "Login with google OAuth." });
+                return res.status(422).json({ error: "Login with google OAuth." });
             }
 
             const isPasswordValid = await bcrypt.compare(password, user.dataValues.password);
             if (!isPasswordValid) {
-                return res.status(401).json({ error: "invalid credentials. 🥲" });
+                return res.status(422).json({ error: "invalid credentials. 🥲" });
             }
 
             delete user.dataValues.password;
@@ -75,11 +88,10 @@ const AuthController: AuthControllerInterface = {
 
     signup: async (req: Request, res: Response) => {
         const requestBody = req.body;
-        let { name, email, nickname, password, oauth, oauth_method } = requestBody;
+        let { name, email, nickname, password, role, school, department, interests, study_vibe, oauth, oauth_method, oauth_token } = requestBody;
         const user_image = req.file;
         let key = '';
-
-        const requiredKeys = ['name', 'email', 'nickname', 'password'];
+        const requiredKeys = ['name', 'email', 'nickname', 'password', 'role', 'school', 'department', 'interests', 'study_vibe'];
 
         const missingKey = requiredKeys.find(key => !(key in requestBody));
 
@@ -88,8 +100,21 @@ const AuthController: AuthControllerInterface = {
         }
 
         try {
-            if(oauth && oauth_method) {
+            if(oauth && oauth_method && oauth_token) {
                 password = '';
+
+                if(oauth_method === 'google') {
+                    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+                    try {
+                        await client.verifyIdToken({
+                            idToken: oauth_token,
+                            audience: process.env.GOOGLE_CLIENT_ID,
+                        });
+                    } catch (error) {
+                        return res.status(400).json({ error: "Invalid Google token." });
+                    }
+                }
             }
             else{
                 if (!password) {
@@ -119,7 +144,7 @@ const AuthController: AuthControllerInterface = {
             }
 
             const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
-            if (!isUserVerified && (!oauth || !oauth_method)) {
+            if (!isUserVerified && (!oauth || !oauth_method || !oauth_token)) {
                 return res.status(400).json({ error: "User email not verified." });
             }
 
@@ -138,8 +163,13 @@ const AuthController: AuthControllerInterface = {
                 name,
                 email,
                 nickname,
+                role,
+                school,
                 password: hashedPassword,
+                department,
+                interests,
                 image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
+                study_vibe
             }
 
             await User.create({
@@ -163,41 +193,6 @@ const AuthController: AuthControllerInterface = {
             console.error(error);
             return res.status(500).json({ error: "Server error." });
         }
-    },
-
-    completeSignup: async (req: Request & afterVerificationMiddlerwareInterface, res: Response) => {
-        const { role, school, department, interests, study_vibe } = req.body;
-        const user = req.user;
-
-        if(!user){
-            return res.status(401).json({ error: "Unauthorized access." });
-        }
-
-        User.update({
-            role: role || 'user',
-            school: school || '',
-            department: department || '',
-            interests: interests || '',
-            study_vibe: study_vibe || [],
-        }, {
-            where: { email: user.email }
-        }).then(() => {
-            return res.status(200).json({
-                success: true,
-                message: "User profile updated successfully.",
-                user: {
-                    ...user,
-                    role: role || 'user',
-                    school: school || '',
-                    department: department || '',
-                    interests: interests || '',
-                    study_vibe: study_vibe || [],
-                }
-            });
-        }).catch((error) => {
-            console.error(error);
-            return res.status(500).json({ error: "Server error." });
-        })
     },
 
     sendOTP: async (req: Request, res: Response) => {
@@ -233,7 +228,7 @@ const AuthController: AuthControllerInterface = {
 
 
             if (otp != cachedOtp) {
-                return res.status(401).json({ error: "Invalid OTP." });
+                return res.status(422).json({ error: "Invalid OTP." });
             }
 
             otpCache.del(`${email}`);
@@ -350,24 +345,6 @@ const AuthController: AuthControllerInterface = {
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: "Server error." });
-        }
-    },
-
-    verifyToken: async (req: Request, res: Response) => {
-        const { token } = req.body;
-        if (!token) {
-            return res.status(400).json({ error: "Bad request." });
-        } 
-
-        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-        try {
-            await client.verifyIdToken({
-                idToken: token,
-                audience: process.env.GOOGLE_CLIENT_ID,
-            });
-        } catch (error) {
-            return res.status(400).json({ error: "Invalid Google token." });
         }
     }
 }

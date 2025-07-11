@@ -38,11 +38,6 @@ export interface userActionsInterface {
   createChat: UserActionFn;
   getChat: UserActionFn;
   generateRandomQuestion: UserActionFn;
-  assessUserAnswers: UserActionFn;
-  fetchQuizLeaderBoard: UserActionFn;
-  getFlashCard: UserActionFn;
-  getUserProgress: UserActionFn;
-  deleteEntryFromQuiz: UserActionFn;
 }
 
 export interface AuthControllerInterface {
@@ -53,8 +48,6 @@ export interface AuthControllerInterface {
   verifyOTP: AuthActionFn;
   sendForgotPasswordEmail: AuthActionFn;
   resetPassword: AuthActionFn;
-  verifyToken: AuthActionFn;
-  completeSignup: UserActionFn
 }
 export interface waitListInterface {
   addUser: AuthActionFn;

@@ -60,8 +60,6 @@ app.post("/api/v1/verifyOTP", AuthController.verifyOTP);
 app.post("/api/v1/otp", AuthController.sendOTP);
 app.post("/api/v1/forgotPassword", AuthController.sendForgotPasswordEmail);
 app.post("/api/v1/resetPassword", AuthController.resetPassword);
-app.post("/api/v1/verifyToken", AuthController.verifyToken);
-app.post("/api/v1/completeSignup", middleware.verifyToken, AuthController.completeSignup);
 
 app.get("/api/v1/waitlist/:email?", waitlistActions.getUser);
 app.post("/api/v1/waitlist", waitlistActions.addUser);
@@ -79,7 +77,6 @@ app.delete("/api/v1/files", middleware.verifyToken, userActions.deleteFiles);
 app.get("/api/v1/generateMaterial", middleware.verifyToken, userActions.generateMaterial);
 app.post("/api/v1/generateQuiz", middleware.verifyToken, userActions.generateQuiz);
 app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.generateFlashcards);
-app.get("/api/v1/flashcard/:flashcard_id?", middleware.verifyToken, userActions.getFlashCard);
 
 app.get("/api/v1/youtube/:id?", middleware.verifyToken, userActions.getYoutubeVideo);
 app.post("/api/v1/youtube", middleware.verifyToken, userActions.addYoutubeVideo);
@@ -88,10 +85,6 @@ app.post("/api/v1/suggestQuestion",middleware.verifyToken, userActions.suggestQu
 app.get("/api/v1/quiz/:quiz_id?", middleware.verifyToken, userActions.getQuiz);
 app.get("/api/v1/files/:file_id?", middleware.verifyToken, userActions.getFile);
 app.get("/api/v1/randomQuestion", middleware.verifyToken, userActions.generateRandomQuestion);
-app.post("/api/v1/assessAnswers", userActions.assessUserAnswers);
-app.get("/api/v1/leaderboard/:quiz_id?", middleware.verifyToken, userActions.fetchQuizLeaderBoard);
-app.get("/api/v1/userProgress/:id", middleware.verifyToken, userActions.getUserProgress);
-app.delete("/api/v1/quiz", middleware.verifyToken, userActions.deleteEntryFromQuiz);
 
 app.post("/api/v1/ai_chat", middleware.verifyToken, userActions.sendChat);
 app.post("/api/v1/chats", middleware.verifyToken, userActions.createChat);
@@ -121,7 +114,8 @@ const startServer = async () => {
 startServer();
 
 
-// scoring users and storing it
-// sorting and organizing workspace
-// streaks tracking
+// try doing user retrieval exported methos
+// youtube saving
+// saving mimetype in document
+// attack detecting
 // rate limiting

@@ -5,7 +5,6 @@ class Workspace extends Model {
   public id!: number;
   public name!: string;
   public userId!: number;
-  public description?: string;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -24,11 +23,6 @@ Workspace.init(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    description: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: null,
     },
     enc_id: {
       type: DataTypes.STRING,

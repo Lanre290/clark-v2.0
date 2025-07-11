@@ -19,9 +19,6 @@ import Quiz from "../Models/quiz";
 import Question from "../Models/question";
 import Chats from "../Models/Chat";
 import Messages from "../Models/Message";
-import userAnswers from "../Models/userQuizAnswers";
-import FlashCard from "../Models/flashCards";
-import FlashcardQuestions from "../Models/flashcardQuestions";
 
 const ai = new GoogleGenAI({
   apiKey: GEMINI_API_KEY,
@@ -32,7 +29,7 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    let { name, description } = req.body;
+    let { name } = req.body;
     const user = req.user;
 
     if (!user) {
@@ -57,7 +54,6 @@ const userActions: userActionsInterface = {
 
       Workspace.create({
         name: name,
-        description: description,
         userId: user.id,
       })
         .then(async(workspace) => {
@@ -451,48 +447,29 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { workspace_id, name, size, duration, mode, file_id, difficulty } = req.body;
+    const { workspace_id, name, size, duration } = req.body;
     const user = req.user;
-    let imageFiles: ImageFiles[] | null = [];
-    let pdfFiles: PDFFiles[] | null = [];
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized access." });
     }
 
-    if (!size || !name || !duration) {
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    if((mode == 'workspace' && !workspace_id) || (mode == 'file' && !file_id)){
+    if (!workspace_id || !size || !name || !duration) {
       return res.status(400).json({ error: "Bad request." });
     }
 
     try {
-      if(mode == 'workspace' && workspace_id){
-        pdfFiles = await PDFFiles.findAll({
-          where: { workspaceId: workspace_id },
-          attributes: ["filePath"],
-        });
+      const pdfFiles = await PDFFiles.findAll({
+        where: { workspaceId: workspace_id },
+        attributes: ["filePath"],
+      });
 
-        imageFiles = await ImageFiles.findAll({
-          where: { workspaceId: workspace_id },
-          attributes: ["filePath"],
-        });
-      }
-      else{
-        pdfFiles = await PDFFiles.findAll({
-          where: { id: file_id },
-          attributes: ["filePath"],
-        });
+      const imageFiles = await ImageFiles.findAll({
+        where: { workspaceId: workspace_id },
+        attributes: ["filePath"],
+      });
 
-        imageFiles = await ImageFiles.findAll({
-          where: { id: file_id },
-          attributes: ["filePath"],
-        });
-      }
-
-      const prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
+      const prompt = `Generate a quiz with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
       let parts: any[] = [];
 
       parts.push({ text: prompt });
@@ -523,7 +500,7 @@ const userActions: userActionsInterface = {
                 },
                 options: {
                   type: Type.ARRAY,
-                  description: "Multiple choice answer options. GIVE THE OPTIONS WITHOUT THE LETTER AS IN: ❌A.) OPTION ✅OPTION",
+                  description: "Multiple choice answer options.",
                   items: {
                     type: Type.STRING,
                   },
@@ -551,7 +528,6 @@ const userActions: userActionsInterface = {
           },
         },
       });
-
 
       const json = JSON.parse(response.text as string);
       let quiz_id = "";
@@ -588,7 +564,6 @@ const userActions: userActionsInterface = {
               success: true,
               quiz_id: quiz_id,
               message: "Quiz created successfully.",
-              questions: json,
             });
           } catch (error) {
             console.error("Error creating questions:", error);
@@ -611,251 +586,26 @@ const userActions: userActionsInterface = {
     }
   },
 
-  assessUserAnswers: async (
-    req: Request & afterVerificationMiddlerwareInterface,
-    res: Response
-  ) => {
-    const { quiz_id, answers, name, email} = req.body;
-
-    if (!quiz_id || !answers || !Array.isArray(answers)) {
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    const quizQuestions = await Question.findAll({
-      where: { quizId: quiz_id },
-      attributes: ["id", "question", "correctAnswer"],
-    });
-
-    if (!quizQuestions || quizQuestions.length === 0) {
-      return res.status(404).json({ error: "Quiz not found." });
-    }
-    if( answers.length !== quizQuestions.length) {
-      return res.status(400).json({ error: "Invalid quiz error." });
-    }
-
-    try {
-      const results = answers.map((answer, index) => {
-        const question = quizQuestions[index];
-        const isCorrect = answer === question.correctAnswer;
-        
-        return {
-          question: question.question,
-          userAnswer: answer,
-          correctAnswer: question.correctAnswer,
-          isCorrect: isCorrect,
-        };
-      });
-
-      // Calculate score
-      const score = results.filter((result) => result.isCorrect).length;
-      const totalQuestions = quizQuestions.length;
-
-      if (totalQuestions === 0) {
-        return res.status(400).json({ error: "No questions found in the quiz." });
-      }
-
-      // Save the quiz assessment
-      await userAnswers.create({
-        name: name,
-        userEmail: email,
-        quizId: quiz_id,
-        userScore: score.toString(),
-        totalQuestions: totalQuestions.toString(),
-        userAnswers: JSON.stringify(results),
-        percentage: ((score / totalQuestions) * 100).toFixed(2) + "%",
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: "Quiz assessment completed successfully.",
-        score,
-        quiz_id,
-        totalQuestions,
-        percentage: ((score / totalQuestions) * 100).toFixed(2) + "%",
-        results,
-
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Server error." });
-    }
-  },
-
-  fetchQuizLeaderBoard: async (
-    req: Request & afterVerificationMiddlerwareInterface,
-    res: Response
-  ) => {
-    const user = req.user;
-    const { quiz_id } = req.params;
-
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized access." });
-    }
-
-    if (!quiz_id) {
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    try {
-      const leaderboard = await userAnswers.findAll({
-        where: { quizId: quiz_id as string },
-        attributes: ["id","name", "userEmail", "userScore", "percentage", "totalQuestions"],
-        order: [["userScore", "DESC"]],
-      });
-
-      if (!leaderboard || leaderboard.length === 0) {
-        return res.status(404).json({ error: "No leaderboard data found." });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Leaderboard retrieved successfully.",
-        quiz_id,
-        totalParticipants: leaderboard.length,
-        averageScore: (
-          leaderboard.reduce((sum, entry) => sum + parseFloat(entry.userScore), 0) /
-          leaderboard.length
-        ).toFixed(2),
-        leaderboard,
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Server error." });
-    }
-  },
-
-  deleteEntryFromQuiz: async (
-    req: Request & afterVerificationMiddlerwareInterface,
-    res: Response
-  ) => {
-    const user = req.user;
-    const { quiz_id, entry_id } = req.query;
-
-    console.log(req.query);
-
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized access." });
-    }
-
-    if (!quiz_id || !entry_id) {
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    try {
-      const entry = await userAnswers.findOne({
-        where: { id: entry_id, quizId: quiz_id },
-      });
-
-      if (!entry) {
-        return res.status(404).json({ error: "Entry not found." });
-      }
-
-      await userAnswers.destroy({ where: { id: entry_id, quizId: quiz_id } });
-
-      return res.status(200).json({
-        success: true,
-        message: "Entry deleted successfully.",
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Server error." });
-    }
-
-  },
-
-  getUserProgress: async (
-    req: Request & afterVerificationMiddlerwareInterface,
-    res: Response
-  ) => {
-    const user = req.user;
-    const { id } = req.params;
-
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized access." });
-    }
-
-    try {
-      if(id){
-        const progress = await userAnswers.findOne({
-          where: { id: id, userEmail: user.email },
-          order: [["createdAt", "DESC"]],
-        });
-
-        if (!progress) {
-          return res.status(404).json({ error: "Progress not found." });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "User progress retrieved successfully.",
-          progress,
-        });
-      }
-      else{
-        const progress = await userAnswers.findAll({
-          where: { userEmail: user.email },
-          order: [["createdAt", "DESC"]],
-        });
-        return res.status(200).json({
-          success: true,
-          message: "User progress retrieved successfully.",
-          progress,
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Server error." });
-    }
-  },
-
   generateFlashcards: async (
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { workspace_id, size, mode, file_id } = req.body;
-    const user = req.user;
-    let pdfFiles: PDFFiles[] | null = [];
-    let imageFiles: ImageFiles[] | null = [];
+    const { workspace_id, size } = req.body;
 
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized access." });
-    }
-
-    if (!size) {
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    if((mode == 'workspace' && !workspace_id) || (mode == 'file' && !file_id)){
-      return res.status(400).json({ error: "Bad request." });
-    }
-
-    if(mode !== 'workspace' && mode !== 'file'){
+    if (!workspace_id || !size) {
       return res.status(400).json({ error: "Bad request." });
     }
 
     try {
-      if(mode == "workspace" && workspace_id){
-        pdfFiles = await PDFFiles.findAll({
-          where: { workspaceId: workspace_id },
-          attributes: ["filePath"],
-        });
+      const pdfFiles = await PDFFiles.findAll({
+        where: { workspaceId: workspace_id },
+        attributes: ["filePath"],
+      });
 
-        imageFiles = await ImageFiles.findAll({
-          where: { workspaceId: workspace_id },
-          attributes: ["filePath"],
-        });
-      }
-      else if(mode == "file" && file_id){
-        pdfFiles = await PDFFiles.findAll({
-          where: { id: file_id },
-          attributes: ["filePath"],
-        });
-
-        imageFiles = await ImageFiles.findAll({
-          where: { id: file_id },
-          attributes: ["filePath"],
-        });
-      }
+      const imageFiles = await ImageFiles.findAll({
+        where: { workspaceId: workspace_id },
+        attributes: ["filePath"],
+      });
 
       const prompt = `Generate a ${size} of flashcard based on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
       let parts: any[] = [];
@@ -892,12 +642,6 @@ const userActions: userActionsInterface = {
                     "The answer or explanation on the other side of the flashcard.",
                   nullable: false,
                 },
-                explanation: {
-                  type: Type.STRING,
-                  description:
-                    "Detailed explanation of the answerfrom the document(s), including references to documents or images used.",
-                  nullable: false,
-                }
               },
               required: ["question", "answer"],
             },
@@ -905,110 +649,8 @@ const userActions: userActionsInterface = {
         },
       });
 
-      const json = JSON.parse(response.text as string);
-      let flashcard_id = "";
-      if (json.length > size) {
-        json.length = size;
-      }
-
-      FlashCard.create({
-        userId: user.id,
-        workspaceId: workspace_id,
-      })
-        .then(async (flashcard) => {
-          flashcard_id = flashcard.id as any;
-          // Map the questions creation into an array of promises
-          const questionPromises = json.map((item: any) => {
-            return FlashcardQuestions.create({
-              question: item.question,
-              answer: item.answer,
-              explanation: item.explanation,
-              flashcardId: flashcard.id,
-            });
-          });
-
-          // Wait for all question creations to complete
-          try {
-            await Promise.all(questionPromises);
-
-            // Send response after all questions created
-            return res.status(200).json({
-              success: true,
-              flashcard_id: flashcard_id,
-              message: "Flashcard created successfully.",
-              questions: json,
-            });
-          } catch (error) {
-            console.error("Error creating questions:", error);
-            return res.status(500).json({
-              error: "Server error.",
-              message: "Error creating questions.",
-            });
-          }
-        })
-        .catch((error) => {
-          console.error("Error creating quiz:", error);
-          return res.status(500).json({
-            error: "Server error.",
-            message: "Error creating quiz.",
-          });
-        });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Server error." });
-    }
-  },
-
-  getFlashCard: async (
-    req: Request & afterVerificationMiddlerwareInterface,
-    res: Response
-  ) => {
-    const { flashcard_id } = req.params;
-    const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized access." });
-    }
-
-    try {
-      if (!flashcard_id) {
-        const flashcards = await FlashCard.findAll({
-          where: { userId: user.id },
-          attributes: { exclude: ["userId"] },
-        });
-
-        if (!flashcards || flashcards.length === 0) {
-          return res.status(404).json({ error: "No flashcards found." });
-        }
-        
-        return res.status(200).json({
-          success: true,
-          message: "flashcards retrieved successfully.",
-          flashcards,
-        });
-      }
-      else{
-        const flashcard = await FlashCard.findOne({
-          where: { id: flashcard_id, userId: user.id },
-          attributes: { exclude: ["userId"] },
-        });
-
-        if (!flashcard) {
-          return res.status(404).json({ error: "Flashcard not found." });
-        }
-
-        const questions = await FlashcardQuestions.findAll({
-          where: { flashcardId: flashcard.id },
-          attributes: { exclude: ["createdAt", "updatedAt", "id", "flashcardId"] },
-        });
-
-        return res.status(200).json({
-          success: true,
-          message: "Flashcard retrieved successfully.",
-          flashcard,
-          questions,
-        });
-      }
+      res.setHeader("Content-Type", "application/json");
+      return res.send(response.text);
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
@@ -1335,43 +977,29 @@ const userActions: userActionsInterface = {
 
     try {
       if (!quiz_id) {
-        const quizzes = await Quiz.findAll({
-          where: { userId: user.id },
-          attributes: { exclude: ["userId"] },
-        });
-
-        if (!quizzes || quizzes.length === 0) {
-          return res.status(404).json({ error: "No quizzes found." });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "Quizzes retrieved successfully.",
-          quizzes,
-        });
+        return res.status(400).json({ error: "Bad request." });
       }
-      else{
-        const quiz = await Quiz.findOne({
-          where: { id: quiz_id, userId: user.id },
-          attributes: { exclude: ["userId"] },
-        });
 
-        if (!quiz) {
-          return res.status(404).json({ error: "Quiz not found." });
-        }
+      const quiz = await Quiz.findOne({
+        where: { id: quiz_id, userId: user.id },
+        attributes: { exclude: ["userId"] },
+      });
 
-        const questions = await Question.findAll({
-          where: { quizId: quiz.id },
-          attributes: { exclude: ["createdAt", "updatedAt", "id", "quizId"] },
-        });
-
-        return res.status(200).json({
-          success: true,
-          message: "Quiz retrieved successfully.",
-          quiz,
-          questions,
-        });
+      if (!quiz) {
+        return res.status(404).json({ error: "Quiz not found." });
       }
+
+      const questions = await Question.findAll({
+        where: { quizId: quiz.id },
+        attributes: { exclude: ["createdAt", "updatedAt", "id", "quizId"] },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Quiz retrieved successfully.",
+        quiz,
+        questions,
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
@@ -1789,7 +1417,7 @@ const userActions: userActionsInterface = {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
     }
-  },
+  }
   
   
 };
