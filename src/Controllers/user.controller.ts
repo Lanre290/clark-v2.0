@@ -187,7 +187,7 @@ const userActions: userActionsInterface = {
 
                     ${question}
                     ${
-                      previous_messages?.trim()
+                      previous_messages
                         ? `\n💬 Context:\n${previous_messages}`
                         : ""
                     }
@@ -214,7 +214,7 @@ const userActions: userActionsInterface = {
                     - Structured with headings, subheadings, bullet points, and code blocks where appropriate
 
                     ${
-                      previous_messages?.trim()
+                      previous_messages
                         ? `💬 Context:\n${previous_messages}
                     ❗❗❗ IMPORTANT: Respond naturally like a chatbot. Do **not** reference how previous messages were given — use them only for context.`
                         : `❗ No prior context is available.`
@@ -1747,7 +1747,7 @@ const userActions: userActionsInterface = {
                       ${
                         files?.length
                           ? `🗂️ Files have been provided. Use them as your primary reference.`
-                          : previous_messages?.trim()
+                          : previous_messages
                           ? `💬 Previous conversation:\n${previous_messages}`
                           : `❗ No prior context is available.`
                       }
