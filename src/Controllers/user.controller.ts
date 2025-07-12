@@ -1111,12 +1111,12 @@ const userActions: userActionsInterface = {
     const { flashcard_id } = req.params;
     const user = req.user;
 
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized access." });
+    if(!flashcard_id){
+      return res.status(400).json({ error: "Bad request." });
     }
 
     try {
-      if (!flashcard_id) {
+      if (!flashcard_id && user) {
         const flashcards = await FlashCard.findAll({
           where: { userId: user.id },
           attributes: { exclude: ["userId"] },
@@ -1133,8 +1133,7 @@ const userActions: userActionsInterface = {
         });
       } else {
         const flashcard = await FlashCard.findOne({
-          where: { id: flashcard_id, userId: user.id },
-          attributes: { exclude: ["userId"] },
+          where: { id: flashcard_id },
         });
 
         if (!flashcard) {
@@ -1514,12 +1513,12 @@ const userActions: userActionsInterface = {
     const { quiz_id } = req.params;
     const user = req.user;
 
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized access." });
+    if(!quiz_id){
+      return res.status(400).json({ error: "Bad request." });
     }
 
     try {
-      if (!quiz_id) {
+      if (!quiz_id && user) {
         const quizzes = await Quiz.findAll({
           where: { userId: user.id },
           attributes: { exclude: ["userId"] },
@@ -1536,7 +1535,7 @@ const userActions: userActionsInterface = {
         });
       } else {
         const quiz = await Quiz.findOne({
-          where: { id: quiz_id, userId: user.id },
+          where: { id: quiz_id},
           attributes: { exclude: ["userId"] },
         });
 

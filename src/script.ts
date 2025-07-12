@@ -80,13 +80,13 @@ app.delete("/api/v1/files", middleware.verifyToken, userActions.deleteFiles);
 app.post("/api/v1/generateMaterial", middleware.verifyToken, upload.array('files', 10), userActions.generateMaterial);
 app.post("/api/v1/generateQuiz", middleware.verifyToken, userActions.generateQuiz);
 app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.generateFlashcards);
-app.get("/api/v1/flashcard/:flashcard_id?", middleware.verifyToken, userActions.getFlashCard);
+app.get("/api/v1/flashcard/:flashcard_id?", userActions.getFlashCard);
 
 app.get("/api/v1/youtube/:id?", middleware.verifyToken, userActions.getYoutubeVideo);
 app.post("/api/v1/youtube", middleware.verifyToken, userActions.addYoutubeVideo);
 app.get("/api/v1/facts", middleware.verifyToken, userActions.generateRandomFact);
 app.post("/api/v1/suggestQuestion",middleware.verifyToken, userActions.suggestQuestion);
-app.get("/api/v1/quiz/:quiz_id?", middleware.verifyToken, userActions.getQuiz);
+app.get("/api/v1/quiz/:quiz_id?", userActions.getQuiz);
 app.get("/api/v1/files/:file_id?", middleware.verifyToken, userActions.getFile);
 app.get("/api/v1/randomQuestion", middleware.verifyToken, userActions.generateRandomQuestion);
 app.post("/api/v1/assessAnswers", userActions.assessUserAnswers);
