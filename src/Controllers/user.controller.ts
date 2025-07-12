@@ -273,51 +273,82 @@ const userActions: userActionsInterface = {
   },
 
   generateMaterial: async (req: Request, res: Response) => {
-    const { topic, word_range } = req.query;
+    const { topic, word_range } = req.body;
+    const files = req.files as Express.Multer.File[];
 
     if (!topic) {
       return res.status(400).json({ error: "Bad request." });
     }
 
     try {
-      // const prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least 5,000–10,000 words if necessary), educational, and rich in content.
-      //                       aThe document should:
-      //                       Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
-      //                       Provide precise definitions of all key terms and concepts, with contextual explanations.
-      //                       Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
-      //                       Include visual aids (diagrams, illustrations, tables, or charts), or clearly indicate where such visuals should be placed.
-      //                       Give step-by-step explanations for processes, workflows, formulas, or problem-solving techniques, with sample problems and solutions where appropriate.
-      //                       Include real-life use cases, industry practices, and related case studies to strengthen understanding.
-      //                       Provide revision tables, mnemonics, or summarized charts for key points.
-      //                       Include a FAQ section addressing likely student questions, misconceptions, or confusions.
-      //                       End with a recap of key takeaways, glossary, further reading suggestions, and practice questions or exercises with solutions.
-      //                       The tone should be engaging, clear, and student-friendly, assuming no prior expertise in the subject.
-      //                       Use proper formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability.
-      //                       Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.`;
+      let prompt = "";
+      if (files && files.length > 0) {
+        prompt = `You are provided with one or more files (documents, PDFs, images, etc). Using ONLY the content of the uploaded file(s), generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
+          word_range ? word_range : "5,000–10,000"
+        } words if necessary), educational, and rich in content.
+            The document should:
+            - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
+            - Provide precise definitions of all key terms and concepts, with contextual explanations.
+            - Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
+            - Include visual aids (diagrams, illustrations, tables, or charts) using proper Markdown image syntax, like: 
+              ![Descriptive Alt Text](https://your-domain.com/path/to/diagram.png)  
+              Do NOT write placeholders like [Diagram: XYZ]. Always use valid Markdown image syntax with actual images from the internet.
+            - Give step-by-step explanations for processes, workflows, formulas, or problem-solving techniques, with sample problems and solutions where appropriate.
+            - Include real-life use cases, industry practices, and related case studies to strengthen understanding.
+            - Provide revision tables, mnemonics, or summarized charts for key points.
+            - Include a FAQ section addressing likely student questions, misconceptions, or confusions.
+            - End with a recap of key takeaways, glossary, further reading suggestions, and practice questions or exercises with solutions.
 
-      const prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
-        word_range ? word_range : "5,000–10,000"
-      } words if necessary), educational, and rich in content.
-                      The document should:
-                      - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
-                      - Provide precise definitions of all key terms and concepts, with contextual explanations.
-                      - Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
-                      - Include visual aids (diagrams, illustrations, tables, or charts) using proper Markdown image syntax, like: 
-                        ![Descriptive Alt Text](https://your-domain.com/path/to/diagram.png)  
-                        Do NOT write placeholders like [Diagram: XYZ]. Always use valid Markdown image syntax with actual images from the internet.
-                      - Give step-by-step explanations for processes, workflows, formulas, or problem-solving techniques, with sample problems and solutions where appropriate.
-                      - Include real-life use cases, industry practices, and related case studies to strengthen understanding.
-                      - Provide revision tables, mnemonics, or summarized charts for key points.
-                      - Include a FAQ section addressing likely student questions, misconceptions, or confusions.
-                      - End with a recap of key takeaways, glossary, further reading suggestions, and practice questions or exercises with solutions.
+            The tone should be engaging, clear, and student-friendly, assuming no prior expertise in the subject.
 
-                      The tone should be engaging, clear, and student-friendly, assuming no prior expertise in the subject.
+            Use proper Markdown formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability. Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.
 
-                      Use proper Markdown formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability. Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.`;
+            IMPORTANT: Only use information found in the uploaded file(s). If the answer is not present in the files, politely state that the information is unavailable.`;
+      } else {
+        prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format that fully explains the topic "${topic}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
+          word_range ? word_range : "5,000–10,000"
+        } words if necessary), educational, and rich in content.
+            The document should:
+            - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
+            - Provide precise definitions of all key terms and concepts, with contextual explanations.
+            - Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
+            - Include visual aids (diagrams, illustrations, tables, or charts) using proper Markdown image syntax, like: 
+              ![Descriptive Alt Text](https://your-domain.com/path/to/diagram.png)  
+              Do NOT write placeholders like [Diagram: XYZ]. Always use valid Markdown image syntax with actual images from the internet.
+            - Give step-by-step explanations for processes, workflows, formulas, or problem-solving techniques, with sample problems and solutions where appropriate.
+            - Include real-life use cases, industry practices, and related case studies to strengthen understanding.
+            - Provide revision tables, mnemonics, or summarized charts for key points.
+            - Include a FAQ section addressing likely student questions, misconceptions, or confusions.
+            - End with a recap of key takeaways, glossary, further reading suggestions, and practice questions or exercises with solutions.
+
+            The tone should be engaging, clear, and student-friendly, assuming no prior expertise in the subject.
+
+            Use proper Markdown formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability. Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.`;
+      }
+      
+      
+      const parts: any[] = [];
+      parts.push({ text: prompt });
+
+      if (files && files.length > 0) {
+        for (const file of files) {
+          parts.push({
+            inlineData: {
+              mimeType: file.mimetype,
+              data: Buffer.from(file.buffer).toString("base64"),
+            },
+          });
+        }
+      }
 
       const response = await ai.models.generateContent({
         model: process.env.THINKING_MODEL as string,
-        contents: prompt,
+        contents: [
+          {
+            role: "user",
+            parts: parts,
+          },
+        ],
       });
 
       const text = response.text;
@@ -492,7 +523,6 @@ const userActions: userActionsInterface = {
         });
 
         if (pdfFiles && pdfFiles.length != 0) {
-          console.log(pdfFiles, pdfFiles[0].fileName, pdfFiles[0].id);
           quizSource = pdfFiles[0].fileName || "File";
           quizfileId = pdfFiles[0].id;
         }
@@ -503,7 +533,6 @@ const userActions: userActionsInterface = {
         });
 
         if (imageFiles && imageFiles.length != 0) {
-          console.log(imageFiles, imageFiles[0].fileName, imageFiles[0].id);
           quizSource = imageFiles[0].fileName || "File";
           quizfileId = imageFiles[0].id;
         }
@@ -813,8 +842,6 @@ const userActions: userActionsInterface = {
   ) => {
     const user = req.user;
     const { quiz_id, entry_id } = req.query;
-
-    console.log(req.query);
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized access." });

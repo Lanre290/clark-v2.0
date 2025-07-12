@@ -76,7 +76,8 @@ app.get("/api/v1/workspace/:id?", middleware.verifyToken, userActions.getWorkspa
 app.post("/api/v1/files", middleware.verifyToken, upload.array('files', 10), userActions.addFiles);
 app.delete("/api/v1/files", middleware.verifyToken, userActions.deleteFiles);
 
-app.get("/api/v1/generateMaterial", middleware.verifyToken, userActions.generateMaterial);
+
+app.post("/api/v1/generateMaterial", middleware.verifyToken, upload.array('files', 10), userActions.generateMaterial);
 app.post("/api/v1/generateQuiz", middleware.verifyToken, userActions.generateQuiz);
 app.post("/api/v1/generateFlashcards", middleware.verifyToken, userActions.generateFlashcards);
 app.get("/api/v1/flashcard/:flashcard_id?", middleware.verifyToken, userActions.getFlashCard);
