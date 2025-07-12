@@ -98,6 +98,8 @@ app.delete("/api/v1/flashcard/:flashcard_id", middleware.verifyToken, userAction
 app.delete("/api/v1/chat/:chat_id", middleware.verifyToken, userActions.deleteChat);
 app.delete("/api/v1/workspace/:id", middleware.verifyToken, userActions.deleteWorkspace);
 app.get("/api/v1/quizScore/:quiz_id", middleware.verifyToken, userActions.fetchUserQuizScore);
+app.get("/api/v1/workspaceQuiz", middleware.verifyToken, userActions.fetchWorkspaceQuiz);
+app.get("/api/v1/workspaceFlashCard", middleware.verifyToken, userActions.fetchWorkspaceFlashCard);
 
 app.post("/api/v1/ai_chat", middleware.verifyToken, userActions.sendChat);
 app.post("/api/v1/chats", middleware.verifyToken, userActions.createChat);

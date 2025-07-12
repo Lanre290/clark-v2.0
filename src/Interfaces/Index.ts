@@ -48,6 +48,8 @@ export interface userActionsInterface {
   deleteChat: UserActionFn; 
   deleteWorkspace: UserActionFn;
   fetchUserQuizScore: UserActionFn;
+  fetchWorkspaceQuiz: UserActionFn;
+  fetchWorkspaceFlashCard: UserActionFn;
 }
 
 export interface AuthControllerInterface {

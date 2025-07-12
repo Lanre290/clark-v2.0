@@ -28,11 +28,11 @@ Quiz.init(
       allowNull: false,
     },
     userId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     workspaceId: {
-      type: DataTypes.STRING,
+      type: DataTypes.UUID,
       allowNull: true,
       defaultValue: null,
     },
