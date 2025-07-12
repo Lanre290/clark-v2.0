@@ -280,7 +280,7 @@ const userActions: userActionsInterface = {
   },
 
   generateMaterial: async (req: Request, res: Response) => {
-    const { topic, pages } = req.body;
+    const { topic, pages, is_tag, user_message } = req.body;
     const files = req.files as Express.Multer.File[];
 
 
@@ -288,8 +288,10 @@ const userActions: userActionsInterface = {
       let prompt = "";
       if (files && files.length > 0) {
         prompt = `You are provided with one or more files (documents, PDFs, images, etc). Using ONLY the content of the uploaded file(s), generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${topic ? 'that fully explains the topic "' + topic : ''}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
-          pages ? pages : "5"
+          pages && !is_tag ? pages : "5"
         } pages where one page is about 450 words), educational, and rich in content.
+            ${ is_tag ? "Here is the user's specific request: " + user_message : ""}
+            HIGHLY PRIORTIZE USERS REQUEST
             The document should:
             - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
             - Provide precise definitions of all key terms and concepts, with contextual explanations.
@@ -310,8 +312,10 @@ const userActions: userActionsInterface = {
             IMPORTANT: Only use information found in the uploaded file(s). If the answer is not present in the files, politely state that the information is unavailable.`;
       } else {
         prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${topic ? 'that fully explains the topic "' + topic : ''}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
-          pages ? pages : "5"
+          pages && !is_tag ? pages : "5"
         } pages where one page is about 450 words), educational, and rich in content.
+        ${ is_tag ? "Here is the user's specific request: " + user_message : ""}
+          HIGHLY PRIORTIZE USERS REQUEST
             The document should:
             - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
             - Provide precise definitions of all key terms and concepts, with contextual explanations.
