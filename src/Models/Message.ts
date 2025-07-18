@@ -8,6 +8,10 @@ class Messages extends Model {
     public forUser!: boolean;
     public fromUser!: boolean;
     public isFile!: boolean;
+    public filePath?: string;
+    public size?: string;
+    public isFlashcard!: boolean;
+    public flashcardId?: string;
     public createdAt!: Date;
     public updatedAt!: Date;
 }
@@ -46,6 +50,16 @@ Messages.init(
             allowNull: true,
             defaultValue: null
         },
+        isFlashcard: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        flashcardId: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            defaultValue: null
+        }
     },
     {
         sequelize: sequelize as Sequelize,

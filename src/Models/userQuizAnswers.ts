@@ -11,6 +11,7 @@ class userAnswers extends Model {
   public timeTaken!: number | null; // Nullable if not provided
   public userAnswers!: any;
   public percentage!: string;
+  public timeRemaining?: string | null; // Nullable if not provided
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -49,6 +50,11 @@ userAnswers.init(
     userAnswers: {
       type: DataTypes.JSON,
       allowNull: false,
+    },
+    timeRemaining: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: "0:00",
     },
     percentage: {
       type: DataTypes.STRING,

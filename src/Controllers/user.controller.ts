@@ -32,7 +32,7 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    let { name, description } = req.body;
+    let { name, description, tag } = req.body;
     const user = req.user;
 
     if (!user) {
@@ -58,6 +58,7 @@ const userActions: userActionsInterface = {
       Workspace.create({
         name: name,
         description: description,
+        tag: tag,
         userId: user.id,
       })
         .then(async (workspace) => {
@@ -720,7 +721,7 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    let { quiz_id, answers, name, email, timeTaken } = req.body;
+    let { quiz_id, answers, name, email, timeTaken, time_remaining } = req.body;
 
     if (!name && !email && !req.user) {
       return res
@@ -784,6 +785,7 @@ const userActions: userActionsInterface = {
         timeTaken: timeTaken || 0,
         userAnswers: JSON.stringify(answers),
         percentage: ((score / totalQuestions) * 100).toFixed(2),
+        time_remaining: time_remaining || "0",
       });
 
       return res.status(200).json({
@@ -1142,6 +1144,22 @@ const userActions: userActionsInterface = {
 
           try {
             await Promise.all(questionPromises);
+
+            const chatId = await Chats.findOne({
+              where: { workspaceId: workspace_id },
+              attributes: ["id"],
+            });
+
+            if(workspace_id){
+              await Messages.create({
+                text: `Flashcards generated successfully with ${size} questions.`,
+                chatId: chatId?.id,
+                fromUser: false,
+                isFile: false,
+                isFlashcard: true,
+                flashcardId: flashcard_id,
+              });
+            }
 
             return res.status(200).json({
               success: true,

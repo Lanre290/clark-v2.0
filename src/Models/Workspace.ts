@@ -6,6 +6,7 @@ class Workspace extends Model {
   public name!: string;
   public userId!: number;
   public description?: string;
+  public tag?: string;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -26,6 +27,11 @@ Workspace.init(
       allowNull: false,
     },
     description: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    tag: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: null,
