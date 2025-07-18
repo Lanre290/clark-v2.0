@@ -495,7 +495,7 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { workspace_id, name, size, duration, mode, file_id, difficulty } =
+    const { workspace_id, name, size, duration, mode, file_id, difficulty, topic } =
       req.body;
     const user = req.user;
     let imageFiles: ImageFiles[] | null = [];
@@ -503,6 +503,7 @@ const userActions: userActionsInterface = {
     let quizSourceType = "workspace";
     let quizSource = "";
     let quizfileId = "";
+    let prompt = "";
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized access." });
@@ -565,7 +566,17 @@ const userActions: userActionsInterface = {
         quizSourceType = "file";
       }
 
-      const prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
+      if(mode == 'workspace' || mode == 'file') {
+        prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
+
+      }
+      else if(mode == 'internet'){
+        prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the topic "${topic}". The questions should be relevant, diverse, and cover different aspects of the topic. For each question, provide multiple choice options and indicate the correct answer. Include a detailed explanation for each answer, referencing reliable sources or general knowledge where appropriate.`;
+      }
+      else {
+        return res.status(400).json({ error: "Bad request.", message: 'Invalid quiz generation mode.' });
+      }
+
       let parts: any[] = [];
 
       parts.push({ text: prompt });
@@ -850,8 +861,22 @@ const userActions: userActionsInterface = {
         attributes: { exclude: ["id", "createdAt", "updatedAt"] },
       });
 
+      const pickedAnswers = userScore?.userAnswers
+        ? JSON.parse(userScore.userAnswers)
+        : [];
+
       const quiz = await Quiz.findOne({
         where: { id: quiz_id as string },
+      });
+
+      const questions = await Question.findAll({
+        where: { quizId: quiz_id as string },
+        attributes: ["question", "options", "correctAnswer", "explanation"],
+      });
+
+      questions.forEach((question, index) => {
+        question.dataValues.userAnswer = pickedAnswers[index];
+        question.dataValues.isCorrect = pickedAnswers[index] == question.correctAnswer
       });
 
       if (!userScore) {
@@ -863,6 +888,7 @@ const userActions: userActionsInterface = {
         message: "User score retrieved successfully.",
         userScore,
         quiz,
+        quizData: questions
       });
     } catch (error) {
       console.error(error);
@@ -954,7 +980,7 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { workspace_id, size, mode, file_id, is_context, context } = req.body;
+    const { workspace_id, size, mode, file_id, is_context, context, topic } = req.body;
     const user = req.user;
     let pdfFiles: PDFFiles[] | null = [];
     let imageFiles: ImageFiles[] | null = [];
@@ -974,8 +1000,8 @@ const userActions: userActionsInterface = {
       return res.status(400).json({ error: "Bad request." });
     }
 
-    if (mode !== "workspace" && mode !== "file") {
-      return res.status(400).json({ error: "Bad request." });
+    if (mode !== "workspace" && mode !== "file" && mode  !== "internet") {
+      return res.status(400).json({ error: "Bad request.", message: 'Invalid flashcard generation mode.' });
     }
 
     try {
@@ -1001,7 +1027,8 @@ const userActions: userActionsInterface = {
         });
       }
 
-      // Support sophisticated user prompts, e.g. "@flashcard generate something on photosynthesis in this pdf"
+
+      
       let prompt = "";
       if (is_context && context && context.trim().length > 0) {
         prompt = `You are an expert flashcard generator for students. The user has provided a specific instruction or topic: "${context}". 
@@ -1016,6 +1043,13 @@ const userActions: userActionsInterface = {
           Go through all materials extensively to ensure coverage of all key topics.
           For each flashcard, provide a question, answer, and a detailed explanation with references to the source(s) used.`;
       }
+
+
+      if(mode == 'internet') {
+        prompt = `Generate ${size} flashcards based on the topic "${topic}".
+          For each flashcard, provide a question, answer, and a detailed explanation with references to the source(s) used.`;
+      }
+
       let parts: any[] = [];
 
       parts.push({ text: prompt });
@@ -1071,7 +1105,6 @@ const userActions: userActionsInterface = {
       })
         .then(async (flashcard) => {
           flashcard_id = flashcard.id as any;
-          // Map the questions creation into an array of promises
           const questionPromises = json.map((item: any) => {
             return FlashcardQuestions.create({
               question: item.question,
@@ -1081,11 +1114,9 @@ const userActions: userActionsInterface = {
             });
           });
 
-          // Wait for all question creations to complete
           try {
             await Promise.all(questionPromises);
 
-            // Send response after all questions created
             return res.status(200).json({
               success: true,
               flashcard_id: flashcard_id,
@@ -2236,7 +2267,10 @@ const userActions: userActionsInterface = {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
     }
-  }
+  },
+
+
+  
 };
 
 export default userActions;
