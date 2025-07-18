@@ -50,6 +50,7 @@ export interface userActionsInterface {
   fetchUserQuizScore: UserActionFn;
   fetchWorkspaceQuiz: UserActionFn;
   fetchWorkspaceFlashCard: UserActionFn;
+  generateSummary: UserActionFn;
 }
 
 export interface AuthControllerInterface {

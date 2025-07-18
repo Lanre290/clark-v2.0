@@ -100,6 +100,7 @@ app.delete("/api/v1/workspace/:id", middleware.verifyToken, userActions.deleteWo
 app.get("/api/v1/quizScore/:quiz_id", middleware.verifyToken, userActions.fetchUserQuizScore);
 app.get("/api/v1/workspaceQuiz", middleware.verifyToken, userActions.fetchWorkspaceQuiz);
 app.get("/api/v1/workspaceFlashCard", middleware.verifyToken, userActions.fetchWorkspaceFlashCard);
+app.post("/api/v1/generateSummary", middleware.verifyToken, upload.array('files', 10), userActions.generateSummary);
 
 app.post("/api/v1/ai_chat", middleware.verifyToken, userActions.sendChat);
 app.post("/api/v1/chats", middleware.verifyToken, userActions.createChat);

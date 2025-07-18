@@ -283,14 +283,19 @@ const userActions: userActionsInterface = {
     const { topic, pages, is_tag, user_message } = req.body;
     const files = req.files as Express.Multer.File[];
 
-
     try {
       let prompt = "";
       if (files && files.length > 0) {
-        prompt = `You are provided with one or more files (documents, PDFs, images, etc). Using ONLY the content of the uploaded file(s), generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${topic ? 'that fully explains the topic "' + topic : ''}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
+        prompt = `You are provided with one or more files (documents, PDFs, images, etc). Using ONLY the content of the uploaded file(s), generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${
+          topic ? 'that fully explains the topic "' + topic : ""
+        }" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
           pages && !is_tag ? pages : "5"
         } pages where one page is about 450 words), educational, and rich in content.
-            ${ is_tag ? "Here is the user's specific request: " + user_message : ""}
+            ${
+              is_tag
+                ? "Here is the user's specific request: " + user_message
+                : ""
+            }
             HIGHLY PRIORTIZE USERS REQUEST
             The document should:
             - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
@@ -311,10 +316,12 @@ const userActions: userActionsInterface = {
 
             IMPORTANT: Only use information found in the uploaded file(s). If the answer is not present in the files, politely state that the information is unavailable.`;
       } else {
-        prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${topic ? 'that fully explains the topic "' + topic : ''}" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
+        prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${
+          topic ? 'that fully explains the topic "' + topic : ""
+        }" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
           pages && !is_tag ? pages : "5"
         } pages where one page is about 450 words), educational, and rich in content.
-        ${ is_tag ? "Here is the user's specific request: " + user_message : ""}
+        ${is_tag ? "Here is the user's specific request: " + user_message : ""}
           HIGHLY PRIORTIZE USERS REQUEST
             The document should:
             - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
@@ -367,7 +374,8 @@ const userActions: userActionsInterface = {
               },
               successful: {
                 type: Type.BOOLEAN,
-                description: "Indicates if the material was generated successfully or you couldn't due to some reasons.",
+                description:
+                  "Indicates if the material was generated successfully or you couldn't due to some reasons.",
               },
             },
             required: ["text", "successful"],
@@ -378,7 +386,7 @@ const userActions: userActionsInterface = {
       const json = JSON.parse(response.text as string);
       const text = json.text;
       const pdfGenerated = json.successful;
-      return res.status(200).json({ text, pdfGenerated  });
+      return res.status(200).json({ text, pdfGenerated });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Server error." });
@@ -495,8 +503,16 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { workspace_id, name, size, duration, mode, file_id, difficulty, topic } =
-      req.body;
+    const {
+      workspace_id,
+      name,
+      size,
+      duration,
+      mode,
+      file_id,
+      difficulty,
+      topic,
+    } = req.body;
     const user = req.user;
     let imageFiles: ImageFiles[] | null = [];
     let pdfFiles: PDFFiles[] | null = [];
@@ -566,15 +582,17 @@ const userActions: userActionsInterface = {
         quizSourceType = "file";
       }
 
-      if(mode == 'workspace' || mode == 'file') {
+      if (mode == "workspace" || mode == "file") {
         prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
-
-      }
-      else if(mode == 'internet'){
+      } else if (mode == "internet") {
         prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the topic "${topic}". The questions should be relevant, diverse, and cover different aspects of the topic. For each question, provide multiple choice options and indicate the correct answer. Include a detailed explanation for each answer, referencing reliable sources or general knowledge where appropriate.`;
-      }
-      else {
-        return res.status(400).json({ error: "Bad request.", message: 'Invalid quiz generation mode.' });
+      } else {
+        return res
+          .status(400)
+          .json({
+            error: "Bad request.",
+            message: "Invalid quiz generation mode.",
+          });
       }
 
       let parts: any[] = [];
@@ -704,11 +722,15 @@ const userActions: userActionsInterface = {
   ) => {
     let { quiz_id, answers, name, email, timeTaken } = req.body;
 
-    if(!name && !email && !req.user) {
-      return res.status(400).json({ error: "Bad request. Name, email, or is_creator are required." });
+    if (!name && !email && !req.user) {
+      return res
+        .status(400)
+        .json({
+          error: "Bad request. Name, email, or is_creator are required.",
+        });
     }
 
-    if(req.user) {
+    if (req.user) {
       name = req.user.name;
       email = req.user.email;
     }
@@ -876,7 +898,8 @@ const userActions: userActionsInterface = {
 
       questions.forEach((question, index) => {
         question.dataValues.userAnswer = pickedAnswers[index];
-        question.dataValues.isCorrect = pickedAnswers[index] == question.correctAnswer
+        question.dataValues.isCorrect =
+          pickedAnswers[index] == question.correctAnswer;
       });
 
       if (!userScore) {
@@ -888,7 +911,7 @@ const userActions: userActionsInterface = {
         message: "User score retrieved successfully.",
         userScore,
         quiz,
-        quizData: questions
+        quizData: questions,
       });
     } catch (error) {
       console.error(error);
@@ -980,7 +1003,8 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { workspace_id, size, mode, file_id, is_context, context, topic } = req.body;
+    const { workspace_id, size, mode, file_id, is_context, context, topic } =
+      req.body;
     const user = req.user;
     let pdfFiles: PDFFiles[] | null = [];
     let imageFiles: ImageFiles[] | null = [];
@@ -1000,8 +1024,13 @@ const userActions: userActionsInterface = {
       return res.status(400).json({ error: "Bad request." });
     }
 
-    if (mode !== "workspace" && mode !== "file" && mode  !== "internet") {
-      return res.status(400).json({ error: "Bad request.", message: 'Invalid flashcard generation mode.' });
+    if (mode !== "workspace" && mode !== "file" && mode !== "internet") {
+      return res
+        .status(400)
+        .json({
+          error: "Bad request.",
+          message: "Invalid flashcard generation mode.",
+        });
     }
 
     try {
@@ -1027,8 +1056,6 @@ const userActions: userActionsInterface = {
         });
       }
 
-
-      
       let prompt = "";
       if (is_context && context && context.trim().length > 0) {
         prompt = `You are an expert flashcard generator for students. The user has provided a specific instruction or topic: "${context}". 
@@ -1044,8 +1071,7 @@ const userActions: userActionsInterface = {
           For each flashcard, provide a question, answer, and a detailed explanation with references to the source(s) used.`;
       }
 
-
-      if(mode == 'internet') {
+      if (mode == "internet") {
         prompt = `Generate ${size} flashcards based on the topic "${topic}".
           For each flashcard, provide a question, answer, and a detailed explanation with references to the source(s) used.`;
       }
@@ -1151,7 +1177,7 @@ const userActions: userActionsInterface = {
     const { flashcard_id } = req.params;
     const user = req.user;
 
-    if(!flashcard_id){
+    if (!flashcard_id) {
       return res.status(400).json({ error: "Bad request." });
     }
 
@@ -1553,7 +1579,7 @@ const userActions: userActionsInterface = {
     const { quiz_id } = req.params;
     const user = req.user;
 
-    if(!quiz_id){
+    if (!quiz_id) {
       return res.status(400).json({ error: "Bad request." });
     }
 
@@ -1575,7 +1601,7 @@ const userActions: userActionsInterface = {
         });
       } else {
         const quiz = await Quiz.findOne({
-          where: { id: quiz_id},
+          where: { id: quiz_id },
           attributes: { exclude: ["userId"] },
         });
 
@@ -2149,7 +2175,7 @@ const userActions: userActionsInterface = {
     }
 
     try {
-      if(workspace_id){
+      if (workspace_id) {
         const workspace = await Workspace.findOne({
           where: { enc_id: workspace_id, userId: user.id },
         });
@@ -2176,7 +2202,7 @@ const userActions: userActionsInterface = {
         });
       } else {
         const quiz = await Quiz.findOne({
-          where: { id: quiz_id, },
+          where: { id: quiz_id },
           attributes: { exclude: ["userId"] },
         });
         if (!quiz) {
@@ -2188,11 +2214,11 @@ const userActions: userActionsInterface = {
         });
 
         return res.status(200).json({
-        success: true,
-        message: "Quiz retreived successfully.",
-        quiz,
-        questions
-      });
+          success: true,
+          message: "Quiz retreived successfully.",
+          quiz,
+          questions,
+        });
       }
     } catch (error) {
       console.error(error);
@@ -2200,7 +2226,7 @@ const userActions: userActionsInterface = {
     }
   },
 
-  fetchWorkspaceFlashCard: async (  
+  fetchWorkspaceFlashCard: async (
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
@@ -2255,7 +2281,7 @@ const userActions: userActionsInterface = {
           where: { flashcardId: flashcard.id },
           attributes: { exclude: ["createdAt", "updatedAt", "flashcardId"] },
         });
-        
+
         return res.status(200).json({
           success: true,
           message: "Flashcard retrieved successfully.",
@@ -2269,8 +2295,77 @@ const userActions: userActionsInterface = {
     }
   },
 
+  generateSummary: async (
+    req: Request & afterVerificationMiddlerwareInterface,
+    res: Response
+  ) => {
+    let { mode, imageFiles, pdfFiles } = req.body;
+    const user = req.user;
 
-  
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized access." });
+    }
+
+    if(!mode){
+      return res.status(400).json({ error: "Bad request." });
+    }
+    
+    if(!imageFiles && !pdfFiles) {
+      return res.status(400).json({ error: "Bad request.", message: "No files provided." });
+    }
+
+    if (mode !== "summary" && mode !== "new_material") {
+      return res.status(400).json({ error: "Bad request." });
+    }
+
+    try {
+      const prompt =
+        mode == "summary"
+          ? `Generate a comprehensive, extended summary of the uploaded document(s), with the summary length and depth proportional to the size and richness of the original content. Break down the material by major sections, topics, or chapters. For each, summarize key ideas, concepts, methods, examples, and definitions.
+            Ensure the output is well-structured and visually clear when rendered. Use proper formatting to enhance readability:
+            Bold headings and subheadings
+            Numbered or bulleted lists for steps, principles, or examples
+            Tables for comparisons, algorithms, time/space complexities, etc.
+            Use indentation or spacing where helpful
+            The final result should look like a well-organized study digest or annotated course summary — not too brief, not a full rewrite, but rich enough to serve as a solid standalone reference for students.`
+          : `Generate a detailed, student-friendly, and standalone learning resource using the uploaded document(s) as source material.
+              Rewrite the content from scratch using clear, simple language—not as a summary or copy.
+              ✅ Structure it like a full lesson, handout, or textbook chapter with:
+              Clear headings and subtopics
+              Step-by-step breakdowns of complex ideas
+              Definitions, explanations, and real-world examples
+              Boxed callouts, tips, or side notes for key concepts
+              Bullet points, numbered lists, and tables (where useful)
+              A logical flow that builds from basic concepts to deeper understanding
+              The result should look clean, professional, and easy to follow—perfect for self-study, revision, or use in an educational app.
+              Think of it as a mini textbook chapter rewritten in plain, student-friendly English.`;
+      let parts: any[] = [];
+
+      parts.push({ text: prompt });
+
+      parts = await processFiles(parts, pdfFiles, imageFiles);
+
+      const response = await ai.models.generateContent({
+        model: process.env.THINKING_MODEL as string,
+        contents: [
+          {
+            role: "user",
+            parts: parts,
+          },
+        ],
+      });
+
+      const summary = response.text;
+      return res.status(200).json({
+        success: true,
+        message: "Summary generated successfully.",
+        summary,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Server error." });
+    }
+  },
 };
 
 export default userActions;
