@@ -24,7 +24,7 @@ Question.init(
       allowNull: false,
     },
     question: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     options: {
@@ -32,7 +32,7 @@ Question.init(
       allowNull: false,
     },
     correctAnswer: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     explanation: {

@@ -691,7 +691,16 @@ const userActions: userActionsInterface = {
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const { quiz_id, answers, name, email, timeTaken } = req.body;
+    let { quiz_id, answers, name, email, timeTaken } = req.body;
+
+    if(!name && !email && !req.user) {
+      return res.status(400).json({ error: "Bad request. Name, email, or is_creator are required." });
+    }
+
+    if(req.user) {
+      name = req.user.name;
+      email = req.user.email;
+    }
 
     if (!quiz_id || !answers || !Array.isArray(answers)) {
       return res.status(400).json({ error: "Bad request." });

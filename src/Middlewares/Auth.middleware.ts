@@ -30,6 +30,34 @@ const AuthMiddleware ={
       
           next();
         });
+      },
+
+      tokenRequired: (req: any, res: any, next: any) => {
+        const token = req.headers['authorization']?.split(' ')[1];
+      
+        if(token){
+          console.log("token");
+          
+          jwt.verify(token, SECRET_KEY, async (err: any, decoded: any) => {
+            if (err) {
+              return res.status(401).json({ message: 'Unauthorized access.' });
+            }
+            req.user = decoded;
+        
+            const email = decoded?.email;
+            if (!email) {
+                return res.status(401).json({ success: false, error: "Unauthorized access." });
+            }
+        
+            const user = await User.findOne({ where: { email } });
+            
+            if (!user) {
+              return res.status(401).json({ success: false, error: "Unauthorized access." });
+            }
+          });
+        }
+
+        next();
       }
 }
 export default AuthMiddleware;

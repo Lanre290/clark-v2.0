@@ -89,7 +89,7 @@ app.post("/api/v1/suggestQuestion",middleware.verifyToken, userActions.suggestQu
 app.get("/api/v1/quiz/:quiz_id?", userActions.getQuiz);
 app.get("/api/v1/files/:file_id?", middleware.verifyToken, userActions.getFile);
 app.get("/api/v1/randomQuestion", middleware.verifyToken, userActions.generateRandomQuestion);
-app.post("/api/v1/assessAnswers", userActions.assessUserAnswers);
+app.post("/api/v1/assessAnswers", middleware.tokenRequired, userActions.assessUserAnswers);
 app.get("/api/v1/leaderboard/:quiz_id?", middleware.verifyToken, userActions.fetchQuizLeaderBoard);
 app.get("/api/v1/userProgress/:id", middleware.verifyToken, userActions.getUserProgress);
 app.delete("/api/v1/userAnswer", middleware.verifyToken, userActions.deleteEntryFromQuiz);

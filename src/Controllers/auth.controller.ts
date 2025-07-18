@@ -259,6 +259,7 @@ const AuthController: AuthControllerInterface = {
                 delete user.dataValues.password;
                 delete user.dataValues.createdAt;
                 delete user.dataValues.updatedAt;
+                
                 const token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
                     expiresIn: "90d",
                 });
