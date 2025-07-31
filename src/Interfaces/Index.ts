@@ -19,40 +19,6 @@ export interface prefileInterface {
     workspaceId: string;
 }
 
-export interface userActionsInterface {
-  createWorkspace: UserActionFn;
-  askQuestion: UserActionFn;
-  generateMaterial: UserActionFn;
-  addFiles: UserActionFn;
-  generateQuiz: UserActionFn;
-  generateFlashcards: UserActionFn;
-  getWorkspace: UserActionFn;
-  getYoutubeVideo: UserActionFn;
-  addYoutubeVideo: UserActionFn;
-  generateRandomFact: UserActionFn;
-  suggestQuestion: UserActionFn;
-  getQuiz: UserActionFn;
-  deleteFiles: UserActionFn;
-  getFile: UserActionFn;
-  sendChat: UserActionFn;
-  createChat: UserActionFn;
-  getChat: UserActionFn;
-  generateRandomQuestion: UserActionFn;
-  assessUserAnswers: UserActionFn;
-  fetchQuizLeaderBoard: UserActionFn;
-  getFlashCard: UserActionFn;
-  getUserProgress: UserActionFn;
-  deleteEntryFromQuiz: UserActionFn;
-  deleteQuiz: UserActionFn;
-  deleteFlashCard: UserActionFn;
-  deleteChat: UserActionFn; 
-  deleteWorkspace: UserActionFn;
-  fetchUserQuizScore: UserActionFn;
-  fetchWorkspaceQuiz: UserActionFn;
-  fetchWorkspaceFlashCard: UserActionFn;
-  generateSummary: UserActionFn;
-}
-
 export interface AuthControllerInterface {
   login: AuthActionFn;
   signup: AuthActionFn;

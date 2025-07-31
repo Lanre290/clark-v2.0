@@ -1,13 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
 import axios from "axios";
 import PDFFiles from "../Models/PDFFile";
 import ImageFiles from "../Models/ImageFile";
-
-export const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "GEMINI_API_KEY";
-
-const ai = new GoogleGenAI({
-  apiKey: GEMINI_API_KEY,
-});
+import { ai } from "../Services/gemini.services";
 
 
 export async function generateDetailedContent(url: string, mimeType: string) {
