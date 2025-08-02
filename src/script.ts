@@ -33,7 +33,7 @@ import { generateRandomQuestion } from "./Controllers/userActions/generateRandom
 import { deleteChat } from "./Controllers/userActions/deleteChat.controller";
 import { deleteWorkspace } from "./Controllers/userActions/deleteWorkspace.controller";
 import { fetchWorkspaceQuiz } from "./Controllers/userActions/fetchWorkspaceQuiz.controller";
-import { fetchWorkspaceFlashCard } from "./Controllers/userActions/fetchWorkspace.controller";
+import { fetchWorkspaceFlashCard } from "./Controllers/userActions/fetchWorkspaceFlashcard.controller";
 import { generateSummary } from "./Controllers/userActions/generateSummaryy.controller";
 
 const express = require("express");

@@ -5,6 +5,8 @@ import ImageFiles from "../../Models/ImageFile";
 import PDFFiles from "../../Models/PDFFile";
 import YouTubeVideo from "../../Models/youtubeVideo";
 import Chats from "../../Models/Chat";
+import Quiz from "../../Models/quiz";
+import FlashCard from "../../Models/flashCards";
 
 export const getWorkspace = async (
     req: Request & afterVerificationMiddlerwareInterface,
@@ -68,9 +70,14 @@ export const getWorkspace = async (
           youtubeVideos,
         };
 
+        const quizzes = await Quiz.findAll({where: {workspaceId: id}});
+        const flashcards = await FlashCard.findAll({where: {workspaceId: id}});
+
         workspace = {
           ...workspace.get({ plain: true }),
           files,
+          quizzes,
+          flashcards
         };
 
         return res.status(200).json({
