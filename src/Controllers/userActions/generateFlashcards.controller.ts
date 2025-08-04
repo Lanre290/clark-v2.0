@@ -159,6 +159,16 @@ export const generateFlashcards = async (
               attributes: ["id"],
             });
 
+            if(is_context){
+                await Messages.create({
+                  text: context,
+                  chatId: chatId?.id,
+                  fromUser: true,
+                  isFile: false,
+                  isFlashcard: false,
+                });
+            }
+
             if(workspace_id){
               await Messages.create({
                 text: `Flashcards generated successfully with ${size} questions.`,
