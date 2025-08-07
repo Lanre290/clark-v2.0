@@ -1,14 +1,49 @@
 import { Request, Response } from "express";
 import { ai } from "../../Services/gemini.services";
 import { Type } from "@google/genai";
+import ImageFiles from "../../Models/ImageFile";
+import PDFFiles from "../../Models/PDFFile";
+import { processFiles } from "../../utils/fileHandler.utils";
 
 export const generateMaterial = async (req: Request, res: Response) => {
-    const { topic, pages, is_tag, user_message } = req.body;
-    const files = req.files as Express.Multer.File[];
+    const { topic, pages, is_tag, user_message, file_ids } = req.body;
+    let imageFiles: any[] = [];
+    let pdfFiles: any[] = [];
 
+
+    if(file_ids && file_ids.length > 0){
+      if(!Array.isArray(file_ids)){
+        return res.status(400).json({ error: "Bad request. file_ids should be an array." });
+      }
+
+      await Promise.all(file_ids.map(async (file_id: string) => {
+        if(!file_id || typeof file_id !== 'string'){
+          return res.status(400).json({ error: "Bad request. Each file_id should be a valid string." });
+        }
+
+        const isImage = await ImageFiles.findOne({
+          where: { id: file_id },
+          attributes: ["filePath"],
+      });
+        if(isImage){
+          imageFiles.push(isImage);
+        } else {
+          const isPDF = await PDFFiles.findOne({
+            where: { id: file_id },
+            attributes: ["filePath"],
+          });
+          if(isPDF){
+            pdfFiles.push(isPDF);
+          }
+        }
+      }
+      ));
+    }
+
+    
     try {
       let prompt = "";
-      if (files && files.length > 0) {
+      if (file_ids && file_ids.length > 0) {
         prompt = `You are provided with one or more files (documents, PDFs, images, etc). Using ONLY the content of the uploaded file(s), generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${
           topic ? 'that fully explains the topic "' + topic : ""
         }" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
@@ -64,19 +99,10 @@ export const generateMaterial = async (req: Request, res: Response) => {
             Use proper Markdown formatting: section headings, subheadings, bullet points, code blocks (if applicable), and spacing for high readability. Make sure the guide is long enough to serve as a standalone learning resource or mini-textbook on the topic.`;
       }
 
-      const parts: any[] = [];
+      let parts: any[] = [];
       parts.push({ text: prompt });
 
-      if (files && files.length > 0) {
-        for (const file of files) {
-          parts.push({
-            inlineData: {
-              mimeType: file.mimetype,
-              data: Buffer.from(file.buffer).toString("base64"),
-            },
-          });
-        }
-      }
+      parts = await processFiles(parts, pdfFiles, imageFiles);
 
       const response = await ai.models.generateContent({
         model: process.env.THINKING_MODEL as string,

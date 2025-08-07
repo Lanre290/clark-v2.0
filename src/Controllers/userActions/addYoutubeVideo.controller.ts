@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { afterVerificationMiddlerwareInterface } from "../../Interfaces/Index";
 import YouTubeVideo from "../../Models/youtubeVideo";
 import { fetchVideoData } from "../../utils/youtube.utils";
+import { addYoutubeVideoSchema } from "../../Services/zod.services";
 
 export const addYoutubeVideo = async (
     req: Request & afterVerificationMiddlerwareInterface,
@@ -16,6 +17,11 @@ export const addYoutubeVideo = async (
 
     if (!video_id || !workspace_id) {
       return res.status(400).json({ error: "Bad request." });
+    }
+
+    const parseResult = addYoutubeVideoSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ errors: parseResult.error.errors });
     }
 
     try {

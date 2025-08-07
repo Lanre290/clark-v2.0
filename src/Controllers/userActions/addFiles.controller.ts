@@ -6,6 +6,7 @@ import { uploadFile } from "../../Services/Cloudflare.services";
 import PDFFiles from "../../Models/PDFFile";
 import ImageFiles from "../../Models/ImageFile";
 import { generateDetailedContent } from "../../utils/gemini.utils";
+import { addFileSchema } from "../../Services/zod.services";
 
 
 
@@ -24,6 +25,11 @@ export const addFiles = async (
 
       if (!workspace_id) {
         return res.status(400).json({ error: "Bad request." });
+      }
+
+      const parseResult = addFileSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ errors: parseResult.error.errors });
       }
 
       const workspaceExists = await Workspace.findOne({
