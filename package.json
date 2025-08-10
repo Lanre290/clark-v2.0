@@ -4,7 +4,7 @@
   "main": "dist/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm install && tsc",
+    "build": "tsc",
     "start": "ts-node src/script.ts",
     "start:mode": "node -e \"process.env.NODE_ENV==='production' ? require('child_process').execSync('node dist/server.js', { stdio: 'inherit' }) : require('child_process').execSync('tsc && node dist/server.js', { stdio: 'inherit' })\""
   },
