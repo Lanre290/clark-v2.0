@@ -8,6 +8,7 @@ const DB_PASSWORD = process.env.DB_PASSWORD!;
 const DB_HOST = process.env.DB_HOST!;
 const DB_CONNECTION = process.env.DB_CONNECTION as any;
 const DB_MODE = process.env.DB_MODE;
+const isProduction = process.env.NODE_ENV === 'production';
 
 let sequelize: Sequelize;
 
@@ -15,11 +16,17 @@ if (DB_MODE === 'URL') {
   const DATABASE_URL = process.env.DATABASE_URL!;
   sequelize = new Sequelize(DATABASE_URL, {
     dialect: DB_CONNECTION,
+    dialectOptions: isProduction
+      ? { ssl: { require: true, rejectUnauthorized: false } }
+      : {},
   });
 } else {
   sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
     host: DB_HOST,
     dialect: DB_CONNECTION,
+    dialectOptions: isProduction
+      ? { ssl: { require: true, rejectUnauthorized: false } }
+      : {},
   });
 }
 
