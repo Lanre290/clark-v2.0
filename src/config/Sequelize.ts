@@ -8,7 +8,7 @@ const DB_PASSWORD = process.env.DB_PASSWORD!;
 const DB_HOST = process.env.DB_HOST!;
 const DB_CONNECTION = process.env.DB_CONNECTION as any;
 const DB_MODE = process.env.DB_MODE;
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'PROD';
 
 let sequelize: Sequelize;
 
