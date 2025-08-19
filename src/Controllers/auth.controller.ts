@@ -114,7 +114,7 @@ const AuthController: AuthControllerInterface = {
             const hashedPassword = await bcrypt.hash(password, 10);
 
             
-
+            
             const user = {
                 name,
                 email,
@@ -261,13 +261,13 @@ const AuthController: AuthControllerInterface = {
     // },
 
     completeSignup: async (req: Request & afterVerificationMiddlerwareInterface, res: Response) => {
-        const { email, role, school, department, interests, study_vibe } = req.body;
+        const { email, role, school, department, interests, study_vibe, is_google } = req.body;
         const user = req.user;
         const user_image = req.file;
 
         let key = '';
 
-        if(!user){
+        if(!user && !is_google){
             return res.status(401).json({ error: "Unauthorized access." });
         }
 
