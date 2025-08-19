@@ -84,14 +84,14 @@ app.use(sanitizeRequest);  // Sanitize request body middleware
 
 // Auth Routes
 app.post("/api/v1/login", AuthController.login);
-app.post("/api/v1/signup", upload.single('user_image'), AuthController.signup);
+app.post("/api/v1/signup", AuthController.signup);
 app.get("/api/v1/refreshToken", middleware.verifyToken, AuthController.refreshToken);
 app.post("/api/v1/verifyOTP", AuthController.verifyOTP);
 app.post("/api/v1/otp", AuthController.sendOTP);
 app.post("/api/v1/forgotPassword", AuthController.sendForgotPasswordEmail);
 app.post("/api/v1/resetPassword", AuthController.resetPassword);
 app.post("/api/v1/verifyToken", AuthController.verifyToken);
-app.post("/api/v1/completeSignup", middleware.verifyToken, AuthController.completeSignup);
+app.post("/api/v1/completeSignup", middleware.verifyToken, upload.single('user_image'), AuthController.completeSignup);
 
 app.get("/api/v1/waitlist/:email?", waitlistActions.getUser);
 app.post("/api/v1/waitlist", waitlistActions.addUser);

@@ -75,10 +75,10 @@ const AuthController: AuthControllerInterface = {
     signup: async (req: Request, res: Response) => {
         const requestBody = req.body;
         let { name, email, nickname, password, oauth, oauth_method } = requestBody;
-        const user_image = req.file;
-        let key = '';
+        
+        
 
-        const requiredKeys = ['name', 'email', 'nickname', 'password'];
+        const requiredKeys = ['name', 'email', 'password'];
 
         const missingKey = requiredKeys.find(key => !(key in requestBody));
 
@@ -113,32 +113,13 @@ const AuthController: AuthControllerInterface = {
             
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            if (user_image && user_image.size > 5 * 1024 * 1024) {
-                return res.status(400).json({ error: "File size exceeds 5MB." });
-            }
-
-            const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
-            if (!isUserVerified && (!oauth || !oauth_method)) {
-                return res.status(400).json({ error: "User email not verified." });
-            }
-
-
-            if(user_image){
-                const bucket = 'clarkuser'
-                key = `${Date.now()}_${user_image.originalname}`;
-                const mimeType = user_image.mimetype;
-                
-                key = key.replace(/[^a-zA-Z0-9.]/g, "_");
-
-                await uploadUserPicture(bucket, key, user_image.buffer, mimeType);
-            }
+            
 
             const user = {
                 name,
                 email,
                 nickname,
                 password: hashedPassword,
-                image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
             }
 
             await User.create({
@@ -147,15 +128,12 @@ const AuthController: AuthControllerInterface = {
                 delete user.dataValues.password;
                 delete user.dataValues.createdAt;
                 delete user.dataValues.updatedAt;
-                const token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
-                    expiresIn: "90d",
-                });
+                delete user.dataValues.id;
 
                 return res.status(200).json({
                     success: true,
                     message: "Signup successful.",
                     user: user,
-                    token: token,
                 });
             });
         } catch (error) {
@@ -278,11 +256,34 @@ const AuthController: AuthControllerInterface = {
     // },
 
     completeSignup: async (req: Request & afterVerificationMiddlerwareInterface, res: Response) => {
-        const { role, school, department, interests, study_vibe } = req.body;
+        const { email, role, school, department, interests, study_vibe } = req.body;
         const user = req.user;
+        const user_image = req.file;
+
+        let key = '';
 
         if(!user){
             return res.status(401).json({ error: "Unauthorized access." });
+        }
+
+        if (user_image && user_image.size > 5 * 1024 * 1024) {
+                return res.status(400).json({ error: "File size exceeds 5MB." });
+            }
+
+        const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
+        if (!isUserVerified) {
+            return res.status(400).json({ error: "User email not verified." });
+        }
+
+
+        if(user_image){
+            const bucket = 'clarkuser'
+            key = `${Date.now()}_${user_image.originalname}`;
+            const mimeType = user_image.mimetype;
+            
+            key = key.replace(/[^a-zA-Z0-9.]/g, "_");
+
+            await uploadUserPicture(bucket, key, user_image.buffer, mimeType);
         }
 
         User.update({
@@ -291,6 +292,7 @@ const AuthController: AuthControllerInterface = {
             department: department || '',
             interests: interests || '',
             study_vibe: study_vibe || [],
+            image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
         }, {
             where: { email: user.email }
         }).then(() => {
@@ -304,6 +306,7 @@ const AuthController: AuthControllerInterface = {
                     department: department || '',
                     interests: interests || '',
                     study_vibe: study_vibe || [],
+                    image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
                 }
             });
         }).catch((error) => {
