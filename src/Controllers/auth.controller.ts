@@ -130,10 +130,15 @@ const AuthController: AuthControllerInterface = {
                 delete user.dataValues.updatedAt;
                 delete user.dataValues.id;
 
+                const token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
+                    expiresIn: "90d",
+                });
+
                 return res.status(200).json({
                     success: true,
                     message: "Signup successful.",
                     user: user,
+                    token: token,
                 });
             });
         } catch (error) {
