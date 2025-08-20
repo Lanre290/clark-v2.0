@@ -78,7 +78,7 @@ const AuthController: AuthControllerInterface = {
         
         
 
-        const requiredKeys = ['name', 'email', 'password'];
+        const requiredKeys = ['name', 'email'];
 
         const missingKey = requiredKeys.find(key => !(key in requestBody));
 
