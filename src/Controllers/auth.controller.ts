@@ -261,13 +261,12 @@ const AuthController: AuthControllerInterface = {
     // },
 
     completeSignup: async (req: Request & afterVerificationMiddlerwareInterface, res: Response) => {
-        const { role, school, department, interests, study_vibe, is_google } = req.body;
-        const user = req.user;
+        const { email, role, school, department, interests, study_vibe, is_google } = req.body;
         const user_image = req.file;
 
         let key = '';
 
-        if(!user && is_google != true){
+        if(!email && is_google != true){
             return res.status(401).json({ error: "Unauthorized access." });
         }
 
@@ -275,7 +274,7 @@ const AuthController: AuthControllerInterface = {
                 return res.status(400).json({ error: "File size exceeds 5MB." });
             }
 
-        const isUserVerified = await UserVerification.findOne({ where: { userEmail: user.email } });
+        const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
         if (!isUserVerified) {
             return res.status(400).json({ error: "User email not verified." });
         }
@@ -299,20 +298,17 @@ const AuthController: AuthControllerInterface = {
             study_vibe: study_vibe || [],
             image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
         }, {
-            where: { email: user.email }
-        }).then(() => {
+            where: { email: email }
+        }).then(async (user) => {
+            const updatedUser = await User.findOne({
+                where: { email: email },
+                attributes: { exclude: ['createdAt', 'updatedAt', 'password'] }
+            });
+            
             return res.status(200).json({
                 success: true,
                 message: "User profile updated successfully.",
-                user: {
-                    ...user,
-                    role: role || 'user',
-                    school: school || '',
-                    department: department || '',
-                    interests: interests || '',
-                    study_vibe: study_vibe || [],
-                    image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
-                }
+                user: updatedUser
             });
         }).catch((error) => {
             console.error(error);
