@@ -98,7 +98,7 @@ const AuthController: AuthControllerInterface = {
 
             const existingUser = await User.findOne({ where: { email }, attributes: { exclude: ['createdAt', 'updatedAt'] } });
             if (existingUser) {
-                return res.status(409).json({ error: "User already exists." });
+                return res.status(409).json({ error: "User already exists.", status: 409 });
             }
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
