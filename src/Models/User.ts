@@ -20,6 +20,7 @@ class User extends Model {
   public paystackauthorizationcode!: string | null;
   public nextbillingdate!: Date | null;
   public streakCount!: number;
+  public lastStreakDate!: Date | null;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -109,6 +110,10 @@ User.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    lastStreakDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {
