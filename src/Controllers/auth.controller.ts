@@ -270,6 +270,12 @@ const AuthController: AuthControllerInterface = {
             return res.status(401).json({ error: "Unauthorized access." });
         }
 
+        const userExists = await User.findOne({ where: { email }, attributes: { exclude: ['createdAt', 'updatedAt'] } });
+        if (!userExists) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+
         if (user_image && user_image.size > 5 * 1024 * 1024) {
                 return res.status(400).json({ error: "File size exceeds 5MB." });
             }
@@ -299,16 +305,21 @@ const AuthController: AuthControllerInterface = {
             image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
         }, {
             where: { email: email }
-        }).then(async (user) => {
+        }).then(async () => {
             const updatedUser = await User.findOne({
                 where: { email: email },
                 attributes: { exclude: ['createdAt', 'updatedAt', 'password'] }
             });
-            
+
+            const token = jwt.sign(updatedUser?.dataValues, process.env.SECRET_KEY, {
+                expiresIn: "90d",
+            });
+
             return res.status(200).json({
                 success: true,
                 message: "User profile updated successfully.",
-                user: updatedUser
+                user: updatedUser,
+                token: token
             });
         }).catch((error) => {
             console.error(error);
