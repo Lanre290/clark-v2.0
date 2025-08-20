@@ -120,6 +120,8 @@ const AuthController: AuthControllerInterface = {
                 email,
                 nickname,
                 password: hashedPassword,
+                oauth: oauth || '',
+                oauth_method: oauth_method || '',
             }
 
             await User.create({
@@ -281,7 +283,7 @@ const AuthController: AuthControllerInterface = {
             }
 
         const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
-        if (!isUserVerified && !is_google) {
+        if (!isUserVerified && is_google != true) {
             return res.status(400).json({ error: "User email not verified." });
         }
 
