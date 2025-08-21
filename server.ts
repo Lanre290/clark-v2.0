@@ -35,6 +35,7 @@ import { deleteWorkspace } from "./src/Controllers/userActions/deleteWorkspace.c
 import { fetchWorkspaceQuiz } from "./src/Controllers/userActions/fetchWorkspaceQuiz.controller";
 import { fetchWorkspaceFlashCard } from "./src/Controllers/userActions/fetchWorkspaceFlashcard.controller";
 import { generateSummary } from "./src/Controllers/userActions/generateSummaryy.controller";
+import { search } from "./src/Controllers/userActions/search.controller";
 
 const express = require("express");
 const dotenv = require("dotenv");
@@ -135,7 +136,9 @@ app.post("/api/v1/generateSummary", middleware.verifyToken, upload.array('files'
 app.post("/api/v1/chats", middleware.verifyToken, createChat);
 
 app.post("/api/v1/aichat", middleware.verifyToken, upload.array('files', 10), sendChat);
-app.get("/api/v1/aichat", middleware.verifyToken, getChat)
+app.get("/api/v1/aichat", middleware.verifyToken, getChat);
+
+app.get("/api/v1/search", middleware.verifyToken, search)
 
 console.log("starting server...");
 
