@@ -125,18 +125,21 @@ export const askQuestion = async (
                     - Accurate and strictly based on the file’s content
                     - Clear, easy to understand, and well-explained
                     - Structured with headings, subheadings, bullet points, and code blocks where appropriate
-
-                    ${
-                      previous_messages
-                        ? `💬 Context:\n${previous_messages}
-                    ❗❗❗ IMPORTANT: Respond naturally like a chatbot. Do **not** reference how previous messages were given — use them only for context.`
-                        : `❗ No prior context is available.`
-                    }
                     `;
       }
 
       async function analyzeDocumentsAndImages() {
         let parts: any[] = [];
+        let previous_messages_string = '';
+
+
+        if(previous_messages) {
+          previous_messages_string = `💬 Context:\n${previous_messages}
+                    ❗❗❗ IMPORTANT: Respond naturally like a chatbot. Do **not** reference how previous messages were given — use them only for context.`;
+          parts.push({ text: previous_messages_string });
+        } else {
+          previous_messages_string = '❗ No prior context is available.';
+        }
 
         // Add the user's question as a prompt
         parts.push({ text: question });
