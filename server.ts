@@ -160,9 +160,3 @@ const startServer = async () => {
 };
 
 startServer();
-
-
-// scoring users and storing it
-// sorting and organizing workspace
-// streaks tracking
-// rate limiting
