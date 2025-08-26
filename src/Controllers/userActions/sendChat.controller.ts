@@ -129,14 +129,14 @@ export const sendChat = async (
 
         const processedFiles = await Promise.all(uploadPromises);
 
-        Messages.create({
+        await Messages.create({
           text,
           chatId: chat_id,
           fromUser: true,
           isFile: false,
         });
         processedFiles.forEach(async (file) => {
-          await Messages.bulkCreate([
+          await Messages.create(
             {
               text: file.originalname,
               chatId: chat_id,
@@ -144,8 +144,7 @@ export const sendChat = async (
               isFile: true,
               filePath: file.url,
               size: formatFileSize(file.size),
-            },
-          ]);
+            });
         });
       } else {
         await Messages.create({
