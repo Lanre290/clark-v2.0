@@ -11,7 +11,7 @@ export const generateRandomFact = async (
       const prompt = `Generate 8 unique, non-repeating educational fact from a random subject like space, biology, physics, chemistry, math, art, philosophy, literature, history, general studies, or others. Each fact should introduce fresh knowledge or context, be accurate, and not exceed 50 words. Rotate subjects frequently to ensure diversity.enerate a random educational fact ranging from philosophy to physics, math, english, general studies, history and many more for a student, providing new knowledge or context. It must be accurate and must be a different one everytime. not more than only 50 words.`;
 
       const response = await ai.models.generateContent({
-        model: process.env.THINKING_MODEL as string,
+        model: process.env.REGULAR_MODEL as string,
         contents: prompt,
         config: {
           responseMimeType: "application/json",

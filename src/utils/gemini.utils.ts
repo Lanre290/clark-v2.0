@@ -11,7 +11,7 @@ export async function generateDetailedContent(url: string, mimeType: string) {
     const data = Buffer.from(pdfResp.data).toString("base64");
 
     const response = await ai.models.generateContent({
-    model: process.env.THINKING_MODEL as string,
+    model: process.env.REGULAR_MODEL as string,
     contents: [
         {
         role: "user",

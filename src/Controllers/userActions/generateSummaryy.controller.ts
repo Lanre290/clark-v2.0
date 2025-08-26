@@ -54,7 +54,7 @@ export const generateSummary =  async (
       parts = await processFiles(parts, pdfFiles, imageFiles);
 
       const response = await ai.models.generateContent({
-        model: process.env.THINKING_MODEL as string,
+        model: process.env.REGULAR_MODEL as string,
         contents: [
           {
             role: "user",
