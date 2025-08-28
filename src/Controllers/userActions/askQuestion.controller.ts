@@ -176,7 +176,7 @@ export const askQuestion = async (
         parts = await processFiles(parts, pdfFiles, imageFiles);
 
         const response = await ai.models.generateContent({
-          model: process.env.REGULAR_MODEL as string,
+          model: process.env.THINKING_MODEL as string,
           contents: [
             {
               role: "user",
@@ -184,6 +184,7 @@ export const askQuestion = async (
             },
           ],
         });
+        
         const aiResponse = response.text;
 
         await Chats.findOne({ where: { workspaceId: workspace_id } }).then(

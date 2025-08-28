@@ -27,7 +27,7 @@ ImageFiles.init(
     },
     workspaceId: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     chatId: {
       type: DataTypes.STRING,
