@@ -129,12 +129,6 @@ export const sendChat = async (
 
         const processedFiles = await Promise.all(uploadPromises);
 
-        await Messages.create({
-          text,
-          chatId: chat_id,
-          fromUser: true,
-          isFile: false,
-        });
         processedFiles.forEach(async (file) => {
           await Messages.create(
             {
@@ -145,6 +139,13 @@ export const sendChat = async (
               filePath: file.url,
               size: formatFileSize(file.size),
             });
+        });
+
+        await Messages.create({
+          text,
+          chatId: chat_id,
+          fromUser: true,
+          isFile: false,
         });
       } else {
         await Messages.create({
@@ -186,6 +187,7 @@ export const sendChat = async (
 
       return res.status(200).json({ answer, chat_id });
     } catch (error) {
+      console.log(error)
       res.status(500).json({ error: "Server error." });
     }
   }
