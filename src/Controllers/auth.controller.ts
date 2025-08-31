@@ -279,14 +279,20 @@ const AuthController: AuthControllerInterface = {
 
 
         if (user_image && user_image.size > 5 * 1024 * 1024) {
-                return res.status(400).json({ error: "File size exceeds 5MB." });
-            }
+            return res.status(400).json({ error: "File size exceeds 5MB." });
+        }
 
-        const isUserVerified = await UserVerification.findOne({ where: { userEmail: email } });
-        if (!isUserVerified && is_google != true) {
+        const isUserVerified = await UserVerification.findOne({ where: { userEmail: email, isVerified: true } });
+        if (!isUserVerified && is_google != true && is_google != "true") {
             return res.status(400).json({ error: "User email not verified." });
         }
 
+        if(is_google == true || is_google == "true") {
+            await UserVerification.create({
+                userEmail: email,
+                isVerified: true,
+            });
+        }
 
         if(user_image){
             const bucket = 'clarkuser'
@@ -367,7 +373,7 @@ const AuthController: AuthControllerInterface = {
 
             otpCache.del(`${email}`);
 
-            UserVerification.create({
+            await UserVerification.create({
                 userEmail: email,
                 isVerified: true,
             });
