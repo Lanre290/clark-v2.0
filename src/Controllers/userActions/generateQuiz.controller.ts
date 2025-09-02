@@ -22,6 +22,8 @@ export const generateQuiz = async (
       file_id,
       difficulty,
       topic,
+      is_context, 
+      context
     } = req.body;
     const user = req.user;
     let imageFiles: ImageFiles[] | null = [];
@@ -31,7 +33,7 @@ export const generateQuiz = async (
     let quizfileId = "";
     let prompt = "";
 
-    if (!user) {
+    if (!user) { 
       return res.status(401).json({ error: "Unauthorized access." });
     }
 
@@ -93,9 +95,27 @@ export const generateQuiz = async (
       }
 
       if (mode == "workspace" || mode == "file") {
-        prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
+        prompt =
+        is_context && context && context.trim().length > 0 ? 
+         `You are an expert quiz generator for students. The user has provided a specific instruction for the quiz to be generated: "${context}". 
+          Carefully analyze the provided documents and images, and generate exactly 10(or more if specified by user) questions that directly address or are highly relevant to the user's request.
+          For each question, provide:
+          - A clear, concise question
+          - A correct answer
+          - An explanation
+          - Answer options`
+        :`Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the provided documenst alongside the images provided. Go through all documents and images extensively to make sure you set questions from everywhere if possible.`;
       } else if (mode == "internet") {
-        prompt = `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the topic "${topic}". The questions should be relevant, diverse, and cover different aspects of the topic. For each question, provide multiple choice options and indicate the correct answer. Include a detailed explanation for each answer, referencing reliable sources or general knowledge where appropriate.`;
+        prompt = 
+        is_context && context && context.trim().length > 0 ? 
+         `You are an expert quiz generator for students, generate a quiz on ${topic}. The user has provided a specific instruction for the quiz to be generated: "${context}". 
+          Generate exactly 10(or more if specified by user) questions that directly address or are highly relevant to the user's request.
+          For each question, provide:
+          - A clear, concise question
+          - A correct answer
+          - An explanation
+          - Answer options`
+        : `Generate a quiz of ${difficulty} level difficulty with ${size} questions and answers on the topic "${topic}". The questions should be relevant, diverse, and cover different aspects of the topic. For each question, provide multiple choice options and indicate the correct answer. Include a detailed explanation for each answer, referencing reliable sources or general knowledge where appropriate.`;
       } else {
         return res
           .status(400)

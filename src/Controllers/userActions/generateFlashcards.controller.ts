@@ -70,11 +70,10 @@ export const generateFlashcards = async (
       let prompt = "";
       if (is_context && context && context.trim().length > 0) {
         prompt = `You are an expert flashcard generator for students. The user has provided a specific instruction or topic: "${context}". 
-          Carefully analyze the provided documents and images, and generate exactly 6 flashcards that directly address or are highly relevant to the user's request.
+          Carefully analyze the provided documents and images, and generate exactly 6(or more if specified by user) flashcards that directly address or are highly relevant to the user's request.
           For each flashcard, provide:
           - A clear, concise question (front)
           - A correct answer (back)
-          Flashcard number must be exactly 6.
           `;
       } else {
         prompt = `Generate ${size} flashcards based on the provided documents and images. 

@@ -6,7 +6,7 @@ import PDFFiles from "../../Models/PDFFile";
 import { processFiles } from "../../utils/fileHandler.utils";
 
 export const generateMaterial = async (req: Request, res: Response) => {
-    const { topic, pages, is_tag, user_message, file_ids } = req.body;
+    const { topic, pages, is_context, context, file_ids } = req.body;
     let imageFiles: any[] = [];
     let pdfFiles: any[] = [];
 
@@ -47,11 +47,11 @@ export const generateMaterial = async (req: Request, res: Response) => {
         prompt = `You are provided with one or more files (documents, PDFs, images, etc). Using ONLY the content of the uploaded file(s), generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${
           topic ? 'that fully explains the topic "' + topic : ""
         }" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
-          pages && !is_tag ? pages : "5"
+          pages && !is_context ? pages : "5"
         } pages where one page is about 450 words), educational, and rich in content.
             ${
-              is_tag
-                ? "Here is the user's specific request: " + user_message
+              is_context
+                ? "Here is the user's specific request: " + context
                 : ""
             }
             HIGHLY PRIORTIZE USERS REQUEST
@@ -77,9 +77,9 @@ export const generateMaterial = async (req: Request, res: Response) => {
         prompt = `Generate an extremely comprehensive, well-structured, and highly detailed PDF guide in Markdown format ${
           topic ? 'that fully explains the topic "' + topic : ""
         }" in a way that is accessible and easy for a student to understand. The guide should be long (at least ${
-          pages && !is_tag ? pages : "5"
+          pages && !is_context ? pages : "5"
         } pages where one page is about 450 words), educational, and rich in content.
-        ${is_tag ? "Here is the user's specific request: " + user_message : ""}
+        ${is_context ? "Here is the user's specific request: " + context : ""}
           HIGHLY PRIORTIZE USERS REQUEST
             The document should:
             - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
