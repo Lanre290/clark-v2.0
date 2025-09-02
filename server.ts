@@ -36,6 +36,7 @@ import { fetchWorkspaceQuiz } from "./src/Controllers/userActions/fetchWorkspace
 import { fetchWorkspaceFlashCard } from "./src/Controllers/userActions/fetchWorkspaceFlashcard.controller";
 import { generateSummary } from "./src/Controllers/userActions/generateSummaryy.controller";
 import { search } from "./src/Controllers/userActions/search.controller";
+import { loginWithGoogle } from './src/Controllers/Auth/googleLogin.controller';
 
 const express = require("express");
 const dotenv = require("dotenv");
@@ -138,7 +139,8 @@ app.post("/api/v1/chats", middleware.verifyToken, createChat);
 app.post("/api/v1/aichat", middleware.verifyToken, upload.array('files', 10), sendChat);
 app.get("/api/v1/aichat", middleware.verifyToken, getChat);
 
-app.get("/api/v1/search", middleware.verifyToken, search)
+app.get("/api/v1/search", middleware.verifyToken, search);
+app.post("/api/v1/googleLogin", loginWithGoogle);
 
 console.log("starting server...");
 

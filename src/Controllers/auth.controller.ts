@@ -55,6 +55,10 @@ const AuthController: AuthControllerInterface = {
             }
 
             delete user.dataValues.password;
+            delete user?.dataValues.paystackcustomercode;
+            delete user?.dataValues.paystackauthorizationcode;
+            delete user?.dataValues.nextbillingdate;
+            delete user?.dataValues.subscriptionstatus;
 
             const token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
                 expiresIn: "90d",
@@ -131,6 +135,10 @@ const AuthController: AuthControllerInterface = {
                 delete user.dataValues.createdAt;
                 delete user.dataValues.updatedAt;
                 delete user.dataValues.id;
+                delete user?.dataValues.paystackcustomercode;
+                delete user?.dataValues.paystackauthorizationcode;
+                delete user?.dataValues.nextbillingdate;
+                delete user?.dataValues.subscriptionstatus;
 
                 const token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
                     expiresIn: "90d",
