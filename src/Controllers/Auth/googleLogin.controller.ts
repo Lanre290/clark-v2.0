@@ -3,7 +3,7 @@ import User from "../../Models/User";
 const jwt = require('jsonwebtoken');
 
 export const loginWithGoogle = async (req: Request, res: Response) => {
-    const { name, email, image_url } = req.body;
+    const { name, email, nickname, image_url } = req.body;
 
     try {
         let user = await User.findOne({ where: { email } });
@@ -16,6 +16,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
             const user = await User.create({
                 email,
                 name,
+                nickname,
                 image_url,
                 oauth: 'google',
                 password: ''
