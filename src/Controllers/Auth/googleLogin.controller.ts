@@ -46,7 +46,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
             expiresIn: "30d",
         });
 
-        return res.status(200).json({ user, token });
+        return res.status(200).json({ user, token, is_new_user: false });
     } catch (error) {
         console.error('Error logging in with Google:', error);
         return res.status(500).json({ error: 'Internal server error' });
