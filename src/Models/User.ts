@@ -115,6 +115,11 @@ User.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    account_completed: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    }
   },
   {
     sequelize: sequelize as Sequelize,

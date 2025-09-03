@@ -318,6 +318,7 @@ const AuthController: AuthControllerInterface = {
             department: department || '',
             interests: interests || '',
             study_vibe: study_vibe || [],
+            account_completed: true,
             image_url: user_image ? `https://${process.env.RS_USERS_IMAGES_DOMAIN}/${key}` : '',
         }, {
             where: { email: email }
