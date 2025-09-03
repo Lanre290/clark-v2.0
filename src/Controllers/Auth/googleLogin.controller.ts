@@ -32,7 +32,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
                 expiresIn: "30d",
             });
 
-            return res.status(200).json({ user, token });
+            return res.status(200).json({ user, token, is_new_user: true });
         }
 
         delete user?.dataValues.password;
