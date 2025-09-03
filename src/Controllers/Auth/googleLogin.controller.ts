@@ -36,7 +36,6 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         }
 
         delete user?.dataValues.password;
-        delete user?.dataValues.id;
         delete user?.dataValues.paystackcustomercode;
         delete user?.dataValues.paystackauthorizationcode;
         delete user?.dataValues.nextbillingdate;
