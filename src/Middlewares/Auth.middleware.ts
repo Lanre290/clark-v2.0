@@ -16,8 +16,6 @@ const AuthMiddleware ={
             return res.status(401).json({ message: 'Unauthorized access.' });
           }
           req.user = decoded;
-
-          console.log("user details: ", decoded)
       
           const email = decoded?.email;
           if (!email) {
