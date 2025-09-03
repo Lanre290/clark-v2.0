@@ -59,6 +59,16 @@ Messages.init(
             type: DataTypes.UUID,
             allowNull: true,
             defaultValue: null
+        },
+        isQuiz:{
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        quizId: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            defaultValue: null
         }
     },
     {

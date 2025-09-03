@@ -8,6 +8,8 @@ import { ai } from "../../Services/gemini.services";
 import { Type } from "@google/genai";
 import Quiz from "../../Models/quiz";
 import Question from "../../Models/question";
+import Chats from "../../Models/Chat";
+import Messages from "../../Models/Message";
 
 export const generateQuiz = async (
     req: Request & afterVerificationMiddlerwareInterface,
@@ -218,7 +220,30 @@ export const generateQuiz = async (
           try {
             await Promise.all(questionPromises);
 
-            // Send response after all questions created
+
+            const chatId = await Chats.findOne({
+              where: { workspaceId: workspace_id },
+              attributes: ["id"],
+            });
+
+            if(is_context){
+                await Messages.create({
+                  text: context,
+                  chatId: chatId?.id,
+                  fromUser: true,
+                });
+            }
+
+            if(workspace_id){
+              await Messages.create({
+                text: `Quiz generated successfully.`,
+                chatId: chatId?.id,
+                fromUser: false,
+                isQuiz: true,
+                quizId: quiz_id,
+              });
+            }
+
             return res.status(200).json({
               success: true,
               quiz_id: quiz_id,
