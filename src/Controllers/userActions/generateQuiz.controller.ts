@@ -232,10 +232,8 @@ export const generateQuiz = async (
                   chatId: chatId?.id,
                   fromUser: true,
                 });
-            }
 
-            if(workspace_id){
-              await Messages.create({
+                await Messages.create({
                 text: `Quiz generated successfully.`,
                 chatId: chatId?.id,
                 fromUser: false,
