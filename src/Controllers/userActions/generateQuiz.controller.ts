@@ -72,7 +72,7 @@ export const generateQuiz = async (
           where: { workspaceId: workspace_id },
           attributes: ["filePath"],
         });
-      } else {
+      } else if (mode == "file" && file_id) {
         pdfFiles = await PDFFiles.findAll({
           where: { id: file_id },
           attributes: ["filePath", "fileName", "id"],

@@ -6,12 +6,7 @@ export const fetchQuizLeaderBoard = async (
     req: Request & afterVerificationMiddlerwareInterface,
     res: Response
   ) => {
-    const user = req.user;
     const { quiz_id } = req.params;
-
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized access." });
-    }
 
     if (!quiz_id) {
       return res.status(400).json({ error: "Bad request." });

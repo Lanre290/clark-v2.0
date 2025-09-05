@@ -122,7 +122,7 @@ app.get("/api/v1/quiz/:quiz_id?", getQuiz);
 app.get("/api/v1/files/:file_id?", middleware.verifyToken, getFile);
 app.get("/api/v1/randomQuestion", middleware.verifyToken, generateRandomQuestion);
 app.post("/api/v1/assessAnswers", middleware.tokenRequired, assessUserAnswers);
-app.get("/api/v1/leaderboard/:quiz_id?", middleware.verifyToken, fetchQuizLeaderBoard);
+app.get("/api/v1/leaderboard/:quiz_id?", middleware.tokenRequired, fetchQuizLeaderBoard);
 app.get("/api/v1/userProgress/:id", middleware.verifyToken, getUserProgress);
 app.delete("/api/v1/userAnswer", middleware.verifyToken, deleteEntryFromQuiz);
 app.delete("/api/v1/quiz/:quiz_id", middleware.verifyToken, deleteQuiz);
