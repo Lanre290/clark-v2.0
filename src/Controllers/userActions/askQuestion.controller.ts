@@ -173,7 +173,9 @@ export const askQuestion = async (
           }
         }
 
-        parts = await processFiles(parts, pdfFiles, imageFiles);
+        if(mode!= "internet"){
+          parts = await processFiles(parts, pdfFiles, imageFiles);
+        }
 
         const response = await ai.models.generateContent({
           model: process.env.THINKING_MODEL as string,
