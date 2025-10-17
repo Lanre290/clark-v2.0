@@ -11,18 +11,19 @@ class User extends Model {
   public school!: string;
   public department!: string;
   public interests!: string;
-  public study_vibe!: string;
+  public study_vibe!: object;
   public image_url!: string;
   public oauth!: string;
-  public plan!: string;
-  public subscriptionstatus!: string;
+  public plan!: number;
+  public subscriptionstatus!: number;
   public paystackcustomercode!: string | null;
   public paystackauthorizationcode!: string | null;
   public nextbillingdate!: Date | null;
   public streakCount!: number;
   public lastStreakDate!: Date | null;
-  public createdAt!: Date;
-  public updatedAt!: Date;
+  public account_completed!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 User.init(
@@ -33,73 +34,67 @@ User.init(
       primaryKey: true,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
+      unique: true,
     },
     nickname: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.STRING(255),
+      allowNull: true,
       defaultValue: "",
     },
     password: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     role: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
-      defaultValue: "user",
     },
     school: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "",
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     department: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "",
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     interests: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "",
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     study_vibe: {
-      type: DataTypes.JSON,
-      allowNull: false,
+      type: DataTypes.JSONB,
+      allowNull: true,
       defaultValue: [],
     },
     image_url: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "",
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     oauth: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "",
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     plan: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 'Free',
+      defaultValue: 0,
     },
     subscriptionstatus: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "None", // or another default enum-like value
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     paystackcustomercode: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true,
     },
     paystackauthorizationcode: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true,
     },
     nextbillingdate: {
@@ -118,12 +113,13 @@ User.init(
     account_completed: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: false
-    }
+      defaultValue: false,
+    },
   },
   {
     sequelize: sequelize as Sequelize,
     tableName: "users",
+    timestamps: true, 
   }
 );
 
