@@ -14,7 +14,7 @@ class User extends Model {
   public study_vibe!: object;
   public image_url!: string;
   public oauth!: string;
-  public plan!: number;
+  public plan!: string;
   public subscriptionstatus!: number;
   public paystackcustomercode!: string | null;
   public paystackauthorizationcode!: string | null;
@@ -81,12 +81,12 @@ User.init(
       allowNull: true,
     },
     plan: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 0,
+      defaultValue: 'Free',
     },
     subscriptionstatus: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: true,
     },
     paystackcustomercode: {
