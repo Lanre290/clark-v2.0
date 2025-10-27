@@ -54,6 +54,7 @@ User.init(
     role: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      defaultValue: "user",
     },
     school: {
       type: DataTypes.STRING(255),
@@ -68,7 +69,7 @@ User.init(
       allowNull: true,
     },
     study_vibe: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       allowNull: true,
       defaultValue: [],
     },
