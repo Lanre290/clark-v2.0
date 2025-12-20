@@ -4,9 +4,11 @@ import { Type } from "@google/genai";
 import ImageFiles from "../../Models/ImageFile";
 import PDFFiles from "../../Models/PDFFile";
 import { processFiles } from "../../utils/fileHandler.utils";
+import Chats from "../../Models/Chat";
+import Messages from "../../Models/Message";
 
 export const generateMaterial = async (req: Request, res: Response) => {
-    const { topic, pages, is_context, context, file_ids } = req.body;
+    const { topic, pages, is_context, context, file_ids, chat_id } = req.body;
     let imageFiles: any[] = [];
     let pdfFiles: any[] = [];
 
@@ -134,6 +136,27 @@ export const generateMaterial = async (req: Request, res: Response) => {
 
       const json = JSON.parse(response.text as string);
       const text = json.text;
+
+      await Chats.findOne({ where: { workspaceId: chat_id } }).then(
+          async (chat) => {
+            await Messages.create({
+              text: context,
+              chatId: chat?.id,
+              fromUser: true,
+              isFile: false,
+            });
+
+            await Messages.create({
+              text: text,
+              chatId: chat?.id,
+              fromUser: false,
+              isFile: false,
+              isGeneratedMaterial: true
+            });
+          }
+        );
+
+
       const pdfGenerated = json.successful;
       return res.status(200).json({ text, pdfGenerated });
     } catch (error) {

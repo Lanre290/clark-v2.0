@@ -12,6 +12,9 @@ class Messages extends Model {
     public size?: string;
     public isFlashcard!: boolean;
     public flashcardId?: string;
+    public isQuiz!: boolean;
+    public quizId?: string;
+    public isGeneratedMaterial!: boolean;
     public createdAt!: Date;
     public updatedAt!: Date;
 }
@@ -69,6 +72,11 @@ Messages.init(
             type: DataTypes.UUID,
             allowNull: true,
             defaultValue: null
+        },
+        isGeneratedMaterial: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
         }
     },
     {
