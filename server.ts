@@ -2,6 +2,7 @@ import AuthController from "./src/Controllers/auth.controller";
 import { createWorkspace } from "./src/Controllers/workspace/createWorkspace.controller";
 import waitlistActions from "./src/Controllers/waitlist.controller";
 import middleware from "./src/Middlewares/Auth.middleware";
+import rateLimit from "./src/Middlewares/rate-limit.middleware";
 import { sanitizeRequest } from "./src/Middlewares/sanitizeRequest.middleware";
 import { upload } from "./src/Services/Multer.services";
 import sequelize from "./src/config/Sequelize";
@@ -102,10 +103,10 @@ app.post("/api/v1/waitlist/mail", waitlistActions.sendWaitlistMail);
 
 
 app.post("/api/v1/askQuestion", middleware.verifyToken, askQuestion);
-app.post("/api/v1/workspace", middleware.verifyToken, createWorkspace);
+app.post("/api/v1/workspace", middleware.verifyToken, rateLimit.workspaceRateLimit, createWorkspace);
 app.get("/api/v1/workspace/:id?", middleware.verifyToken, getWorkspace);
 
-app.post("/api/v1/files", middleware.verifyToken, upload.array('files', 10), addFiles);
+app.post("/api/v1/files", middleware.verifyToken, upload.array('files', 10), rateLimit.fileUploadRateLimit, addFiles);
 app.delete("/api/v1/files", middleware.verifyToken, deleteFiles);
 
 
@@ -118,7 +119,7 @@ app.get("/api/v1/youtube/:id?", middleware.verifyToken, getYoutubeVideo);
 app.post("/api/v1/youtube", middleware.verifyToken, addYoutubeVideo);
 app.get("/api/v1/facts", middleware.verifyToken, generateRandomFact);
 app.post("/api/v1/suggestQuestion",middleware.verifyToken, suggestQuestion);
-app.get("/api/v1/quiz/:quiz_id?", getQuiz);
+app.get("/api/v1/quiz/:quiz_id?", middleware.tokenRequired, getQuiz);
 app.get("/api/v1/files/:file_id?", middleware.verifyToken, getFile);
 app.get("/api/v1/randomQuestion", middleware.verifyToken, generateRandomQuestion);
 app.post("/api/v1/assessAnswers", middleware.tokenRequired, assessUserAnswers);

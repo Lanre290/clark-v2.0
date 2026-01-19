@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { afterVerificationMiddlerwareInterface } from "../../Interfaces/Index";
 import Quiz from "../../Models/quiz";
 import Question from "../../Models/question";
+import QuizLoaded from "../../Models/quizLoaded"
+import User from "../../Models/User";
 
 export const getQuiz = async (
     req: Request & afterVerificationMiddlerwareInterface,
@@ -31,13 +33,28 @@ export const getQuiz = async (
           quizzes,
         });
       } else {
+
         const quiz = await Quiz.findOne({
           where: { id: quiz_id },
-          attributes: { exclude: ["userId"] },
         });
 
         if (!quiz) {
           return res.status(404).json({ error: "Quiz not found." });
+        }
+
+        const creator = await User.findOne({ where: { id: quiz.userId } });
+        const numberOfTimesLoaded = await QuizLoaded.count({ where: { quizId: quiz.id } });
+
+        if(creator?.plan == 'Free' && quiz.userId != user?.id){
+          return res.status(403).json({ error: "Only paid users can access quizzes." });
+        }
+
+        if(creator?.plan == 'Paid' && numberOfTimesLoaded >= 5) {
+          return res.status(403).json({ error: "Quiz has reached the maximum load limit." });
+        }
+
+        if ((quiz as any)?.dataValues) {
+          delete (quiz as any).dataValues.userId;
         }
 
         const questions = await Question.findAll({
@@ -45,11 +62,19 @@ export const getQuiz = async (
           attributes: { exclude: ["createdAt", "updatedAt", "id", "quizId"] },
         });
 
+        const sharedToNonUser = user?.plan == 'Free' ? false : true;
+
+        await QuizLoaded.create({
+          userId: user?.id,
+          quizId: quiz.id,
+        });
+
         return res.status(200).json({
           success: true,
           message: "Quiz retrieved successfully.",
           quiz,
           questions,
+          sharedToNonUser
         });
       }
     } catch (error) {

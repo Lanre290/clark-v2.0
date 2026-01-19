@@ -2,12 +2,16 @@ import { DataTypes, Model, Sequelize } from "sequelize";
 import sequelize from "../config/Sequelize";
 
 class Quiz extends Model {
-  public id!: number;
+  public id!: string;
   public name!: string;
   public creator!: string;
-  public userId!: string;
+  public userId!: number;
   public workspaceId!: string;
+  public fileId!: string;
+  public quizSource!: string;
+  public quizSourceType!: string;
   public duration!: number;
+
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }

@@ -42,5 +42,6 @@ export interface afterVerificationMiddlerwareInterface {
     id: number;
     name: string;
     email: string;
+    plan: string;
   };
 }
