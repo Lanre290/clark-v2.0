@@ -106,7 +106,7 @@ app.post("/api/v1/askQuestion", middleware.verifyToken, askQuestion);
 app.post("/api/v1/workspace", middleware.verifyToken, rateLimit.workspaceRateLimit, createWorkspace);
 app.get("/api/v1/workspace/:id?", middleware.verifyToken, getWorkspace);
 
-app.post("/api/v1/files", middleware.verifyToken, upload.array('files', 10), rateLimit.fileUploadRateLimit, addFiles);
+app.post("/api/v1/files", middleware.verifyToken, upload.array('files', 10), addFiles);
 app.delete("/api/v1/files", middleware.verifyToken, deleteFiles);
 
 
