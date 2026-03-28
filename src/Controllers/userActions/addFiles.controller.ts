@@ -108,7 +108,9 @@ export const addFiles = async (
           });
         }
 
-        generateDetailedContent(file.url, file.mimetype);
+        generateDetailedContent(file.url, file.mimetype)
+          .then(() => console.log("AI Processing complete"))
+          .catch((err) => console.error("AI Background Error:", err));
       }
 
       return res.status(201).json({
