@@ -23,30 +23,38 @@ const RateLimitMiddleware ={
     },
 
     fileUploadRateLimit: async (req: any, res: any, next: any) => {
+    try {
         const user = req.user;
         const { workspace_id } = req.body;
 
-        if(user.plan == 'Free'){
-            const fileUploads = await PDFFiles.findAll({ where: { userId: user.id, workspaceId: workspace_id } });
-            const imageFiles = await ImageFiles.findAll({ where: { userId: user.id, workspaceId: workspace_id } });
-
-            const totalLength = fileUploads.length + imageFiles.length;
-            console.log(totalLength)
-            if (totalLength >= 2) {
-                return res.status(429).json({ message: 'File upload limit reached.' });
-            }
+        // 1. SAFETY CHECK: If the stream hasn't provided the ID yet, we can't query the DB
+        if (!workspace_id) {
+            return res.status(400).json({ 
+                error: "Missing workspace_id. Ensure it is sent BEFORE the files in your form-data." 
+            });
         }
-        else if(user.plan == 'Paid'){
-            const fileUploads = await PDFFiles.findAll({ where: { userId: user.id, workspaceId: workspace_id } });
-            const imageFiles = await ImageFiles.findAll({ where: { userId: user.id, workspaceId: workspace_id } });
 
-            const totalLength = fileUploads.length + imageFiles.length;
-            if (totalLength >= 5) {
+        if (user.plan === 'Free' || user.plan === 'Paid') {
+            const limit = user.plan === 'Free' ? 2 : 5;
+
+            // 2. Optimized Database Query (Use count instead of findAll)
+            // findAll loads every row into memory; count is much faster for rate limiting
+            const [pdfCount, imageCount] = await Promise.all([
+                PDFFiles.count({ where: { userId: user.id, workspaceId: workspace_id } }),
+                ImageFiles.count({ where: { userId: user.id, workspaceId: workspace_id } })
+            ]);
+
+            if ((pdfCount + imageCount) >= limit) {
                 return res.status(429).json({ message: 'File upload limit reached.' });
             }
         }
 
         next();
+    } catch (error) {
+        console.error("Rate Limit Middleware Error:", error);
+        // 3. FAIL SAFE: If the DB is down or something breaks, don't let the app hang
+        return res.status(500).json({ error: "Internal server error during validation." });
     }
+}
 }
 export default RateLimitMiddleware;
