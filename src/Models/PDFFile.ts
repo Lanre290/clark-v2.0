@@ -34,7 +34,7 @@ PDFFiles.init(
       allowNull: true
     },
     userId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
     },
     filePath: {
