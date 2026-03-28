@@ -40,8 +40,8 @@ const RateLimitMiddleware ={
             // 2. Optimized Database Query (Use count instead of findAll)
             // findAll loads every row into memory; count is much faster for rate limiting
             const [pdfCount, imageCount] = await Promise.all([
-                PDFFiles.count({ where: { userId: user.id, workspaceId: workspace_id } }),
-                ImageFiles.count({ where: { userId: user.id, workspaceId: workspace_id } })
+                PDFFiles.count({ where: { userId: user.id, workspaceId: String(workspace_id) } }),
+                ImageFiles.count({ where: { userId: user.id, workspaceId: String(workspace_id) } })
             ]);
 
             if ((pdfCount + imageCount) >= limit) {
