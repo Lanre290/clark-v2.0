@@ -4,6 +4,7 @@ import { Op } from "sequelize";
 import Workspace from "../../Models/Workspace";
 import PDFFiles from "../../Models/PDFFile";
 import ImageFiles from "../../Models/ImageFile";
+import Chat from "../../Models/Chat";
 
 
 export const search = async (
@@ -11,6 +12,7 @@ export const search = async (
     res: Response
   ) => {
     let { s } = req.query;
+    const user = req.user;
 
     s = s?.toString();
 
@@ -21,29 +23,45 @@ export const search = async (
     try {
       const WorkspaceResult = await Workspace.findAll({
         where: {
+          userId: user.id,
           [Op.or]: [
             { name: { [Op.like]: `%${s}%` } },
             { description: { [Op.like]: `%${s}%` } },
           ],
         },
+        attributes: { exclude: ["id", "userId", "createdAt", "updatedAt"] }
       });
 
       const imageFilesResult = await ImageFiles.findAll({
         where: {
+          userId: user.id,
           [Op.or]: [
             { fileName: { [Op.like]: `%${s}%` } },
             { summary: { [Op.like]: `%${s}%` } },
           ],
         },
+        attributes: { exclude: ["userId", "createdAt", "updatedAt"] }
       });
 
       const pdfResult = await PDFFiles.findAll({
         where: {
+          userId: user.id,
           [Op.or]: [
             { fileName: { [Op.like]: `%${s}%` } },
             { summary: { [Op.like]: `%${s}%` } },
           ],
         },
+        attributes: { exclude: ["userId", "createdAt", "updatedAt"] }
+      });
+
+      const chatResult = await Chat.findAll({
+        where: {
+          userId: user.id,
+          [Op.or]: [
+            { name: { [Op.like]: `%${s}%` } },
+          ],
+        },
+        attributes: { exclude: ["userId", "createdAt", "updatedAt"] }
       });
 
       return res.status(200).json({
@@ -51,6 +69,7 @@ export const search = async (
         WorkspaceResult,
         imageFilesResult,
         pdfResult,
+        chatResult,
         message: "Search results retrieved successfully.",
       });
     } catch (error) {
