@@ -61,7 +61,7 @@ export const generateMaterial = async (req: Request, res: Response) => {
             - Start with a detailed introduction, explaining the topic’s background, importance, and real-world applications.
             - Provide precise definitions of all key terms and concepts, with contextual explanations.
             - Break down complex ideas into simple, digestible parts, using analogies, storytelling, and practical examples.
-            - Include visual aids (diagrams, illustrations, tables, or charts) using proper Markdown image syntax, like: 
+            - IF WITHIN YOUR CAPABILITY: Include visual aids (diagrams, illustrations, tables, or charts) using proper Markdown image syntax, like: 
               ![Descriptive Alt Text](https://your-domain.com/path/to/diagram.png)  
               Do NOT write placeholders like [Diagram: XYZ]. Always use valid Markdown image syntax with actual images from the internet.
             - Give step-by-step explanations for processes, workflows, formulas, or problem-solving techniques, with sample problems and solutions where appropriate.

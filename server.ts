@@ -38,6 +38,7 @@ import { fetchWorkspaceFlashCard } from "./src/Controllers/userActions/fetchWork
 import { generateSummary } from "./src/Controllers/userActions/generateSummaryy.controller";
 import { search } from "./src/Controllers/userActions/search.controller";
 import { loginWithGoogle } from './src/Controllers/Auth/googleLogin.controller';
+import { updateUserDetails } from './src/Controllers/userActions/updateUserDetails.controller'
 
 const express = require("express");
 const dotenv = require("dotenv");
@@ -95,6 +96,7 @@ app.post("/api/v1/forgotPassword", AuthController.sendForgotPasswordEmail);
 app.post("/api/v1/resetPassword", AuthController.resetPassword);
 app.post("/api/v1/verifyToken", AuthController.verifyToken);
 app.post("/api/v1/completeSignup", upload.single('user_image'), AuthController.completeSignup);
+app.patch("/api/v1/updateUserDetails", middleware.verifyToken, updateUserDetails);
 
 app.get("/api/v1/waitlist/:email?", waitlistActions.getUser);
 app.post("/api/v1/waitlist", waitlistActions.addUser);
@@ -142,6 +144,7 @@ app.get("/api/v1/aichat", middleware.verifyToken, getChat);
 
 app.get("/api/v1/search", middleware.verifyToken, search);
 app.post("/api/v1/googleLogin", loginWithGoogle);
+
 
 console.log("starting server...");
 
