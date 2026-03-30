@@ -40,6 +40,7 @@ import { search } from "./src/Controllers/userActions/search.controller";
 import { loginWithGoogle } from './src/Controllers/Auth/googleLogin.controller';
 import { updateUserDetails } from './src/Controllers/userActions/updateUserDetails.controller';
 import { renameController } from './src/Controllers/userActions/renameChat.controller';
+import { renameWorkspace } from './src/Controllers/userActions/renameWorkspace.controller';
 
 const express = require("express");
 const dotenv = require("dotenv");
@@ -143,6 +144,7 @@ app.post("/api/v1/chats", middleware.verifyToken, createChat);
 app.post("/api/v1/aichat", middleware.verifyToken, upload.array('files', 10), sendChat);
 app.get("/api/v1/aichat", middleware.verifyToken, getChat);
 app.patch("/api/v1/renameChat", middleware.verifyToken, renameController);
+app.patch("/api/v1/renameWorkspace", middleware.verifyToken, renameWorkspace);
 
 app.get("/api/v1/search", middleware.verifyToken, search);
 app.post("/api/v1/googleLogin", loginWithGoogle);
