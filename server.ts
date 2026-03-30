@@ -38,7 +38,8 @@ import { fetchWorkspaceFlashCard } from "./src/Controllers/userActions/fetchWork
 import { generateSummary } from "./src/Controllers/userActions/generateSummaryy.controller";
 import { search } from "./src/Controllers/userActions/search.controller";
 import { loginWithGoogle } from './src/Controllers/Auth/googleLogin.controller';
-import { updateUserDetails } from './src/Controllers/userActions/updateUserDetails.controller'
+import { updateUserDetails } from './src/Controllers/userActions/updateUserDetails.controller';
+import { renameController } from './src/Controllers/userActions/renameChat.controller';
 
 const express = require("express");
 const dotenv = require("dotenv");
@@ -141,6 +142,7 @@ app.post("/api/v1/chats", middleware.verifyToken, createChat);
 
 app.post("/api/v1/aichat", middleware.verifyToken, upload.array('files', 10), sendChat);
 app.get("/api/v1/aichat", middleware.verifyToken, getChat);
+app.patch("/api/v1/renameChat", middleware.verifyToken, renameController);
 
 app.get("/api/v1/search", middleware.verifyToken, search);
 app.post("/api/v1/googleLogin", loginWithGoogle);
