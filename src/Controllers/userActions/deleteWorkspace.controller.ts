@@ -30,9 +30,9 @@ export const deleteWorkspace = async (
         return res.status(404).json({ error: "Workspace not found." });
       }
 
-      await PDFFiles.destroy({ where: { workspaceId: workspace.id } });
-      await ImageFiles.destroy({ where: { workspaceId: workspace.id } });
-      await YouTubeVideo.destroy({ where: { workspaceId: workspace.id } });
+      await PDFFiles.destroy({ where: { workspaceId: id} });
+      await ImageFiles.destroy({ where: { workspaceId: id} });
+      await YouTubeVideo.destroy({ where: { workspaceId: id} });
       await Chats.destroy({ where: { workspaceId: id } });
       await Workspace.destroy({ where: { enc_id: id, userId: user.id } });
 
