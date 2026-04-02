@@ -19,10 +19,10 @@ export const addYoutubeVideo = async (
       return res.status(400).json({ error: "Bad request." });
     }
 
-    const parseResult = addYoutubeVideoSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      return res.status(400).json({ errors: parseResult.error.errors });
-    }
+    // const parseResult = addYoutubeVideoSchema.safeParse(req.body);
+    // if (!parseResult.success) {
+    //   return res.status(400).json({ errors: parseResult.error.errors });
+    // }
 
     try {
       let videoData = await YouTubeVideo.findOne({
