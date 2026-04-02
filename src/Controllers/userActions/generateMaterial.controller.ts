@@ -137,24 +137,24 @@ export const generateMaterial = async (req: Request, res: Response) => {
       const json = JSON.parse(response.text as string);
       const text = json.text;
 
-      await Chats.findOne({ where: { workspaceId: chat_id } }).then(
-          async (chat) => {
-            await Messages.create({
-              text: context,
-              chatId: chat?.id,
-              fromUser: true,
-              isFile: false,
-            });
+      // await Chats.findOne({ where: { workspaceId: chat_id } }).then(
+      //     async (chat) => {
+      //       await Messages.create({
+      //         text: context,
+      //         chatId: chat?.id,
+      //         fromUser: true,
+      //         isFile: false,
+      //       });
 
-            await Messages.create({
-              text: text,
-              chatId: chat?.id,
-              fromUser: false,
-              isFile: false,
-              isGeneratedMaterial: true
-            });
-          }
-        );
+      //       await Messages.create({
+      //         text: text,
+      //         chatId: chat?.id,
+      //         fromUser: false,
+      //         isFile: false,
+      //         isGeneratedMaterial: true
+      //       });
+      //     }
+      //   );
 
 
       const pdfGenerated = json.successful;
