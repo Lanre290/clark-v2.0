@@ -25,8 +25,8 @@ export const search = async (
         where: {
           userId: user.id,
           [Op.or]: [
-            { name: { [Op.like]: `%${s}%` } },
-            { description: { [Op.like]: `%${s}%` } },
+            { name: { [Op.iLike]: `%${s}%` } },
+            { description: { [Op.iLike]: `%${s}%` } },
           ],
         },
         attributes: { exclude: ["id", "userId", "createdAt", "updatedAt"] }
@@ -36,8 +36,8 @@ export const search = async (
         where: {
           userId: String(user.id),
           [Op.or]: [
-            { fileName: { [Op.like]: `%${s}%` } },
-            { summary: { [Op.like]: `%${s}%` } },
+            { fileName: { [Op.iLike]: `%${s}%` } },
+            { summary: { [Op.iLike]: `%${s}%` } },
           ],
         },
         attributes: { exclude: ["userId", "createdAt", "updatedAt"] }
@@ -47,8 +47,8 @@ export const search = async (
         where: {
           userId: String(user.id),
           [Op.or]: [
-            { fileName: { [Op.like]: `%${s}%` } },
-            { summary: { [Op.like]: `%${s}%` } },
+            { fileName: { [Op.iLike]: `%${s}%` } },
+            { summary: { [Op.iLike]: `%${s}%` } },
           ],
         },
         attributes: { exclude: ["userId", "createdAt", "updatedAt"] }
@@ -58,7 +58,7 @@ export const search = async (
         where: {
           userId: user.id,
           [Op.or]: [
-            { name: { [Op.like]: `%${s}%` } },
+            { name: { [Op.iLike]: `%${s}%` } },
           ],
         },
         attributes: { exclude: ["userId", "createdAt", "updatedAt"] }
