@@ -90,6 +90,8 @@ export const askQuestion = async (
                     - If YouTube descriptions are included, use them as background knowledge, but **never mention** videos or descriptions in your answer.
                     - If the answer is not present in any of the sources, **state clearly** that the information is unavailable.
 
+                    IF your context includes youtube video description, you MUST gather as much information on the internet as you can about the video content based on the information provided.
+                    
                     Your response must be:
                     - Direct, without referencing sources or past messages.
                     - Accurate and highly detailed.
@@ -128,6 +130,8 @@ export const askQuestion = async (
 
                     Use all available sources:
                     - Prior conversation context (previous_messages)
+
+                    IF your context includes youtube video description, you MUST gather as much information on the internet as you can about the video content based on the information provided.
 
                     Instructions:
                     - Use previous_messages only for understanding the user's goals and context — do not reference them in your response.
