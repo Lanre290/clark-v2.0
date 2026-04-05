@@ -34,7 +34,7 @@ export const search = async (
 
       const imageFilesResult = await ImageFiles.findAll({
         where: {
-          userId: user.id,
+          userId: String(user.id),
           [Op.or]: [
             { fileName: { [Op.like]: `%${s}%` } },
             { summary: { [Op.like]: `%${s}%` } },
@@ -45,7 +45,7 @@ export const search = async (
 
       const pdfResult = await PDFFiles.findAll({
         where: {
-          userId: user.id,
+          userId: String(user.id),
           [Op.or]: [
             { fileName: { [Op.like]: `%${s}%` } },
             { summary: { [Op.like]: `%${s}%` } },
