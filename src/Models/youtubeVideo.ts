@@ -13,6 +13,7 @@ class YouTubeVideo extends Model {
   public commentCount!: number;
   public duration!: string;
   public workspaceId!: string;
+  public userId!: number;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -28,7 +29,6 @@ YouTubeVideo.init(
     videoId: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     title: {
       type: DataTypes.STRING,
@@ -68,7 +68,12 @@ YouTubeVideo.init(
     workspaceId: {
       type: DataTypes.STRING,
       allowNull: false,
-  },
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    }
+  
   },
   {
     sequelize: sequelize as Sequelize,

@@ -9,9 +9,12 @@ import { uploadUserPicture } from "../Services/Cloudflare.services";
 import UserVerification from "../Models/userVerification";
 import { sendForgotMail } from "../Mailing/forgotPassword";
 const NodeCache = require("node-cache");
-const otpCache = new NodeCache({ stdTTL: 0, checkperiod: 120 });
 import crypto from "crypto";
 import ForgotPassword from "../Models/forgotPassword";
+
+
+const otpCache = new NodeCache({ stdTTL: 0, checkperiod: 120 });
+const userOtpCache = new NodeCache({ stdTTL: 0, checkperiod: 120 });
 
 
 const AuthController: AuthControllerInterface = {
@@ -352,6 +355,12 @@ const AuthController: AuthControllerInterface = {
         try {
             const otp = Math.floor(1000 + Math.random() * 9000);
             otpCache.set(`${email}`, otp, 7200);
+
+            if(userOtpCache.get(`${email}`)){
+                return res.status(429).json({ error: "Too many requests within a short period." });
+            }
+
+            userOtpCache.set(`${email}`, true, 60);
             sendOTP(email, name, otp);
             return res.status(200).json({
                 success: true,

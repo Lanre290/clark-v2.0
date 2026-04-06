@@ -54,6 +54,7 @@ export const addYoutubeVideo = async (
         commentCount: ytVideoData.statistics.commentCount,
         duration: ytVideoData.statistics.viewCount,
         workspaceId: workspace_id,
+        userId: user.id,
       })
         .then((video) => {
           videoData = video;
