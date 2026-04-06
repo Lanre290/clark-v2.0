@@ -57,6 +57,7 @@ export const search = async (
       const chatResult = await Chat.findAll({
         where: {
           userId: user.id,
+          workspaceId: null,
           [Op.or]: [
             { name: { [Op.iLike]: `%${s}%` } },
           ],
