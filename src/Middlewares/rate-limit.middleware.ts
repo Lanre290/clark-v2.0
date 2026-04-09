@@ -1,8 +1,9 @@
-import { generateMaterial } from "../Controllers/userActions/generateMaterial.controller";
+import FlashCard from "../Models/flashCards";
 import ImageFiles from "../Models/ImageFile";
 import PDFFiles from "../Models/PDFFile";
-import User from "../Models/User";
+import Quiz from "../Models/quiz";
 import Workspace from "../Models/Workspace";
+import { Op } from "sequelize";
 
 const RateLimitMiddleware ={
     workspaceRateLimit: async (req: any, res: any, next: any) => {
@@ -76,6 +77,42 @@ const RateLimitMiddleware ={
             return res.status(500).json({ error: "Internal server error during validation." });
         }
     },
+
+    generateFlashCardRateLimit: async (req: any, res: any, next: any) => {
+        try {
+            const user = req.user;
+
+            if(user.plan == 'Free' || user.plan == "Paid"){
+                const limit = user.plan == 'Free' ? 2 : 7;
+
+                const startOfDay = new Date();
+                startOfDay.setUTCHours(0, 0, 0, 0);
+
+                const endOfDay = new Date();
+                endOfDay.setUTCHours(23, 59, 59, 999);
+
+                const count = await FlashCard.count({
+                where: {
+                    createdAt: {
+                    [Op.between]: [startOfDay, endOfDay],
+                    },
+                },
+                });
+
+                if (count >= limit) {
+                    return res.status(403).json({ message: `Flashcard generation limit reached. You can only create ${limit} flashcards per day.` });
+                }
+            }
+
+
+            next();
+        } catch (error) {
+            console.error("Rate Limit Middleware Error:", error);
+            return res.status(500).json({ error: "Internal server error during validation." });
+        }
+    },
+
+    
 
 }
 export default RateLimitMiddleware;
