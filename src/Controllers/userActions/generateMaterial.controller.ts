@@ -6,11 +6,39 @@ import PDFFiles from "../../Models/PDFFile";
 import { processFiles } from "../../utils/fileHandler.utils";
 import Chats from "../../Models/Chat";
 import Messages from "../../Models/Message";
+import { afterVerificationMiddlerwareInterface } from "../../Interfaces/Index";
+import materialGenerated from "../../Models/materialGenerated";
+import { Op } from "sequelize";
 
-export const generateMaterial = async (req: Request, res: Response) => {
+export const generateMaterial = async (req: Request & afterVerificationMiddlerwareInterface, res: Response) => {
     const { topic, pages, is_context, context, file_ids, chat_id } = req.body;
     let imageFiles: any[] = [];
     let pdfFiles: any[] = [];
+    const user = req.user;
+
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const count = await materialGenerated.count({
+    where: {
+        createdAt: {
+        [Op.between]: [startOfDay, endOfDay],
+        },
+        userId: user.id,
+    },
+    });
+
+    console.log(count);
+    if(user.plan == 'Free'){
+      return res.status(429).json({ error: "Rate limit exceeded." });
+    }
+
+    if(count >= 5 && user.plan == 'Paid'){
+      return res.status(429).json({ error: "Rate limit exceeded." });
+    }
 
 
     if(file_ids && file_ids.length > 0){
@@ -155,6 +183,8 @@ export const generateMaterial = async (req: Request, res: Response) => {
       //       });
       //     }
       //   );
+      
+      materialGenerated.create({userId: user.id});
 
 
       const pdfGenerated = json.successful;

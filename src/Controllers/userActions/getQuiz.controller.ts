@@ -62,12 +62,14 @@ export const getQuiz = async (
           attributes: { exclude: ["createdAt", "updatedAt", "id", "quizId"] },
         });
 
-        const sharedToNonUser = user?.plan == 'Free' ? false : true;
+        const sharedToNonUser = creator?.plan == 'Free' ? false : true;
 
-        await QuizLoaded.create({
-          userId: user?.id,
-          quizId: quiz.id,
-        });
+        if(user && user.email != creator?.email){
+          await QuizLoaded.create({
+            userId: user?.id,
+            quizId: quiz.id,
+          });
+        }
 
         return res.status(200).json({
           success: true,

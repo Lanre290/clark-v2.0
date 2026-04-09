@@ -62,21 +62,21 @@ const RateLimitMiddleware ={
     }
     },
 
-    generateMaterialRateLimit: async (req: any, res: any, next: any) => {
-        try {
-            const { file_ids } = req.body;
-            const user = req.user;
+    // generateMaterialRateLimit: async (req: any, res: any, next: any) => {
+    //     try {
+    //         const { file_ids } = req.body;
+    //         const user = req.user;
 
-            if(file_ids && file_ids.length > 0 && user.plan == 'Free'){
-                return res.status(403).json({ message: 'Material generation with file context is not allowed in the Free plan. Please upgrade to use this feature.' });
-            }
+    //         if(file_ids && file_ids.length > 0 && user.plan == 'Free'){
+    //             return res.status(403).json({ message: 'Material generation with file context is not allowed in the Free plan. Please upgrade to use this feature.' });
+    //         }
 
-            next();
-        } catch (error) {
-            console.error("Rate Limit Middleware Error:", error);
-            return res.status(500).json({ error: "Internal server error during validation." });
-        }
-    },
+    //         next();
+    //     } catch (error) {
+    //         console.error("Rate Limit Middleware Error:", error);
+    //         return res.status(500).json({ error: "Internal server error during validation." });
+    //     }
+    // },
 
     generateFlashCardRateLimit: async (req: any, res: any, next: any) => {
         try {
