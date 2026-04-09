@@ -31,7 +31,6 @@ export const generateMaterial = async (req: Request & afterVerificationMiddlerwa
     },
     });
 
-    console.log(count);
     if(user.plan == 'Free'){
       return res.status(429).json({ error: "Rate limit exceeded." });
     }

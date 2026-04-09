@@ -12,18 +12,13 @@ const RateLimitMiddleware ={
         }
         const user = req.user;
 
-        if(user.plan == 'Free'){
+        if(user.plan == 'Free' || user.plan == 'Paid'){
+            const limit = user.plan == 'Free' ? 3 : 20;
             const workspaces = await Workspace.findAll({ where: { userId: user.id } });
 
-            if (workspaces.length >= 3) {
+            if (workspaces.length >= limit) {
                 return res.status(402).json({ message: 'Workspace limit reached.' });
             }
-        }
-        else if(user.plan == 'Paid'){
-            const workspaces = await Workspace.findAll({ where: { userId: user.id } });
-            if (workspaces.length >= 10) {
-                return res.status(402).json({ message: 'Workspace limit reached.' });
-            }   
         }
 
         next();
