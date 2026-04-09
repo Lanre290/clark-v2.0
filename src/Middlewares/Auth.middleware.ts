@@ -21,6 +21,7 @@ const AuthMiddleware ={
 
         // Ensure user exists in DB
         const user = await User.findOne({ where: { email } });
+        req.user.plan = user?.plan; // Attach plan to req.user for downstream use
         if (!user) {
           return res.status(401).json({ message: 'User no longer exists.' });
         }
@@ -42,6 +43,7 @@ const AuthMiddleware ={
       }
 
       const user = await User.findOne({ where: { email } });
+      req.user.plan = user?.plan; // Attach plan to req.user for downstream use
 
       if (!user) {
         return res.status(401).json({ success: false, error: "Unauthorized access." });

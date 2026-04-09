@@ -1,3 +1,4 @@
+import { generateMaterial } from "../Controllers/userActions/generateMaterial.controller";
 import ImageFiles from "../Models/ImageFile";
 import PDFFiles from "../Models/PDFFile";
 import User from "../Models/User";
@@ -8,11 +9,7 @@ const RateLimitMiddleware ={
         if(!req.user){
             return res.status(401).json({ message: 'Unauthorized access.' });
         }
-        const email = req.user.email;
-        const user = await User.findOne({ where: { email } });
-        if(!user){
-            return res.status(404).json({ message: 'User not found.' });
-        }
+        const user = req.user;
 
         if(user.plan == 'Free'){
             const workspaces = await Workspace.findAll({ where: { userId: user.id } });
@@ -62,6 +59,23 @@ const RateLimitMiddleware ={
         console.error("Rate Limit Middleware Error:", error);
         return res.status(500).json({ error: "Internal server error during validation." });
     }
-}
+    },
+
+    generateMaterialRateLimit: async (req: any, res: any, next: any) => {
+        try {
+            const { file_ids } = req.body;
+            const user = req.user;
+
+            if(file_ids && file_ids.length > 0 && user.plan == 'Free'){
+                return res.status(403).json({ message: 'Material generation with file context is not allowed in the Free plan. Please upgrade to use this feature.' });
+            }
+
+            next();
+        } catch (error) {
+            console.error("Rate Limit Middleware Error:", error);
+            return res.status(500).json({ error: "Internal server error during validation." });
+        }
+    },
+
 }
 export default RateLimitMiddleware;
