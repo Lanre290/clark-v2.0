@@ -43,10 +43,10 @@ export const getQuiz = async (
         }
 
         const creator = await User.findOne({ where: { id: quiz.userId } });
-        const numberOfTimesLoaded = await QuizLoaded.count({ where: { quizId: quiz.id } });
+        const numberOfTimesLoaded = await QuizLoaded.count({ where: { quizId: quiz.id }, distinct: true, col: "userId", });
 
         if(creator?.plan == 'Free' && quiz.userId != user?.id){
-          return res.status(403).json({ error: "Only paid users can access quizzes." });
+          return res.status(403).json({ error: "Access denied." });
         }
 
         if(creator?.plan == 'Paid' && numberOfTimesLoaded >= 5) {

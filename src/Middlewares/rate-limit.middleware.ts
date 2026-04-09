@@ -17,7 +17,7 @@ const RateLimitMiddleware ={
 
             if (workspaces.length >= 3) {
                 return res.status(402).json({ message: 'Workspace limit reached.' });
-            }   
+            }
         }
         else if(user.plan == 'Paid'){
             const workspaces = await Workspace.findAll({ where: { userId: user.id } });
