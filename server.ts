@@ -116,7 +116,7 @@ app.delete("/api/v1/files", middleware.verifyToken, deleteFiles);
 
 
 app.post("/api/v1/generateMaterial", middleware.verifyToken, upload.array('files', 10), rateLimit.generateMaterialRateLimit, generateMaterial);
-app.post("/api/v1/generateQuiz", middleware.verifyToken, generateQuiz);
+app.post("/api/v1/generateQuiz", middleware.verifyToken, rateLimit.generateQuizRateLimit, generateQuiz);
 app.post("/api/v1/generateFlashcards", middleware.verifyToken, rateLimit.generateFlashCardRateLimit, generateFlashcards);
 app.get("/api/v1/flashcard/:flashcard_id?", getFlashCard);
 

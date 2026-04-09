@@ -96,6 +96,7 @@ const RateLimitMiddleware ={
                     createdAt: {
                     [Op.between]: [startOfDay, endOfDay],
                     },
+                    userId: user.id,
                 },
                 });
 
@@ -112,7 +113,40 @@ const RateLimitMiddleware ={
         }
     },
 
-    
+    generateQuizRateLimit: async (req: any, res: any, next: any) => {
+        try {
+            const user = req.user;
+
+            if(user.plan == 'Free' || user.plan == "Paid"){
+                const limit = user.plan == 'Free' ? 2 : 7;
+
+                const startOfDay = new Date();
+                startOfDay.setUTCHours(0, 0, 0, 0);
+
+                const endOfDay = new Date();
+                endOfDay.setUTCHours(23, 59, 59, 999);
+
+                const count = await Quiz.count({
+                where: {
+                    createdAt: {
+                    [Op.between]: [startOfDay, endOfDay],
+                    },
+                    userId: user.id,
+                },
+                });
+
+                if (count >= limit) {
+                    return res.status(403).json({ message: `Quiz generation limit reached. You can only create ${limit} quizzes per day.` });
+                }
+            }
+
+
+            next();
+        } catch (error) {
+            console.error("Rate Limit Middleware Error:", error);
+            return res.status(500).json({ error: "Internal server error during validation." });
+        }
+    }
 
 }
 export default RateLimitMiddleware;
