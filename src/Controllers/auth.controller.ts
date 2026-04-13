@@ -236,7 +236,7 @@ const AuthController: AuthControllerInterface = {
 
     sendOTP: async (req: Request, res: Response) => {
         const { email, name } = req.body;
-        if (!email) {
+        if (!email || !name) {
             return res.status(400).json({ error: "Bad request." });
         }
         try {
