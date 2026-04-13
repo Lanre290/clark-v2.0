@@ -8,7 +8,7 @@ export const sendWaitlistForm1 = async (email: string, name: string) => {
     sendSmtpEmail.to = [{ email: email, name: name }];
     
     // Remember to use your verified sender email
-    sendSmtpEmail.sender = { name: "Clark", email: "no-reply@clarkai.com" };
+    sendSmtpEmail.sender = { name: "Clark", email: "clarkai.tech@gmail.com" };
 
     sendSmtpEmail.htmlContent = `<!DOCTYPE html>
         <html lang="en">

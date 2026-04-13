@@ -8,7 +8,7 @@ export const sendWaitlistMail = async (email: string, name: string) => {
     sendSmtpEmail.to = [{ email: email, name: name }];
     
     // Ensure this matches your verified Brevo sender
-    sendSmtpEmail.sender = { name: "Clark", email: "no-reply@clarkai.com" };
+    sendSmtpEmail.sender = { name: "Clark", email: "clarkai.tech@gmail.com" };
 
     const firstName = name.trim().split(" ").length > 1 
       ? name.trim().split(" ")[1] 
