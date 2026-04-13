@@ -52,6 +52,7 @@
     "pdf-parse": "^1.1.1",
     "sanitize-html": "^2.16.0",
     "sequelize": "^6.37.5",
+    "sib-api-v3-sdk": "^8.5.0",
     "uuid": "^11.1.0",
     "xss": "^1.0.15",
     "zod": "^3.25.23"

@@ -1,5 +1,4 @@
-import { transporter } from "../utils/mailing.utils";
-
+import { apiInstance, SibApiV3 } from "../utils/mailing.utils";
 
 export const sendForgotMail = async (
   resetLink: string,
@@ -7,69 +6,28 @@ export const sendForgotMail = async (
   name: string
 ) => {
   try {
-    const mailOptions = {
-      from: "Clark <no-reply@clarkai.com>",
-      to: email,
-      subject: "Reset Your Clark Password",
-      html: `<!DOCTYPE html>
+    const sendSmtpEmail = new SibApiV3.SendSmtpEmail();
+
+    sendSmtpEmail.subject = "Reset Your Clark Password";
+    sendSmtpEmail.to = [{ email: email, name: name }];
+    
+    // Remember: Use your verified sender email here
+    sendSmtpEmail.sender = { name: "Clark", email: "no-reply@clarkai.com" };
+
+    sendSmtpEmail.htmlContent = `<!DOCTYPE html>
       <html lang="en">
       <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
           <title>Reset Password</title>
           <style>
-              body {
-                  font-family: 'Inter', sans-serif;
-                  background-color: #ffffff;
-                  margin: 0;
-                  padding: 0;
-                  color: #1d1d1f;
-              }
-              .banner {
-                    width: 100%;
-                    height: auto;
-                    margin-bottom: 20px;
-                    border-radius: 12px;
-                }
-                .container {
-                    max-width: 520px;
-                    margin: auto;
-                    padding: 0px 0px 40px 0px;
-                    border-radius: 12px;
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-                    background-color: #fff;
-                    text-align: center;
-                }
-              h1 {
-                  font-size: 24px;
-                  font-weight: 600;
-                  margin-bottom: 16px;
-              }
-              p {
-                  font-size: 16px;
-                  line-height: 1.6;
-                  color: #444;
-              }
-              h1,p{
-                  margin: 0 20px;
-              }
-              .button {
-                  display: inline-block;
-                  margin-top: 30px;
-                  background-color: #ff4a00;
-                  color: #fff;
-                  text-decoration: none;
-                  font-weight: 600;
-                  font-size: 16px;
-                  padding: 14px 24px;
-                  border-radius: 8px;
-                  margin-bottom: 30px;
-              }
-              .footer {
-                  margin-top: 40px;
-                  font-size: 14px;
-                  color: #888;
-              }
+              body { font-family: 'Inter', sans-serif; background-color: #ffffff; margin: 0; padding: 0; color: #1d1d1f; }
+              .banner { width: 100%; height: auto; margin-bottom: 20px; border-radius: 12px; }
+              .container { max-width: 520px; margin: auto; padding: 0px 0px 40px 0px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06); background-color: #fff; text-align: center; }
+              h1 { font-size: 24px; font-weight: 600; margin-bottom: 16px; margin: 0 20px; }
+              p { font-size: 16px; line-height: 1.6; color: #444; margin: 0 20px; }
+              .button { display: inline-block; margin-top: 30px; background-color: #ff4a00; color: #ffffff !important; text-decoration: none; font-weight: 600; font-size: 16px; padding: 14px 24px; border-radius: 8px; margin-bottom: 30px; }
+              .footer { margin-top: 40px; font-size: 14px; color: #888; }
           </style>
       </head>
       <body>
@@ -81,19 +39,17 @@ export const sendForgotMail = async (
               <a href="${resetLink}" class="button">Reset Password</a>
               <p>If you didn’t request this, feel free to ignore it — your current password will stay safe.</p>
               <p>This link will expire in 1 hour.</p>
-              <div class="footer">
-                  — The Clark Team
-              </div>
+              <div class="footer">— The Clark Team</div>
           </div>
       </body>
-      </html>`,
-    };
+      </html>`;
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log("Reset email sent successfully. MessageID:", data.messageId);
     return true;
+
   } catch (error) {
-    console.error("SendMail Error:", error);
+    console.error("Brevo Reset Mail Error:", error);
     return "Error sending mail";
   }
 };
