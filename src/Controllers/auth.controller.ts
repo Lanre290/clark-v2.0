@@ -247,7 +247,7 @@ const AuthController: AuthControllerInterface = {
                 return res.status(429).json({ error: "Too many requests within a short period." });
             }
 
-            userOtpCache.set(`${email}`, true, 60);
+            userOtpCache.set(`${email}`, true, 30);
             sendOTP(email, name, otp);
             return res.status(200).json({
                 success: true,
