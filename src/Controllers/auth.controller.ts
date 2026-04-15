@@ -11,6 +11,7 @@ import { sendForgotMail } from "../Mailing/forgotPassword";
 const NodeCache = require("node-cache");
 import crypto from "crypto";
 import ForgotPassword from "../Models/forgotPassword";
+import UserOtp from "../Models/otp";
 
 
 const otpCache = new NodeCache({ stdTTL: 0, checkperiod: 120 });
@@ -240,12 +241,15 @@ const AuthController: AuthControllerInterface = {
             return res.status(400).json({ error: "Bad request." });
         }
         try {
-            const otp = Math.floor(1000 + Math.random() * 9000);
-            otpCache.set(`${email}`, otp, 7200);
-
             if(userOtpCache.get(`${email}`)){
                 return res.status(429).json({ error: "Too many requests within a short period." });
             }
+            
+            const otp = Math.floor(1000 + Math.random() * 9000);
+            await UserOtp.create({
+                userEmail: email,
+                otp: otp,
+            });
 
             userOtpCache.set(`${email}`, true, 30);
             sendOTP(email, name, otp);
@@ -266,7 +270,13 @@ const AuthController: AuthControllerInterface = {
         }
         try {
 
-            const cachedOtp = otpCache.get(`${email}`);
+            const otpExists = await UserOtp.findOne({ where: { userEmail: email }, order: [['createdAt', 'DESC']], limit: 1 });
+            
+            if(!otpExists) {
+                return res.status(400).json({ error: "OTP expired." });
+            }
+
+            const cachedOtp = otpExists ? otpExists.dataValues.otp : null;
             if (!cachedOtp) {
                 return res.status(400).json({ error: "OTP expired." });
             }
@@ -276,7 +286,7 @@ const AuthController: AuthControllerInterface = {
                 return res.status(401).json({ error: "Invalid OTP." });
             }
 
-            otpCache.del(`${email}`);
+            await UserOtp.destroy({ where: { userEmail: email } });
 
             await UserVerification.create({
                 userEmail: email,
